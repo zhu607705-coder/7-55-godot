@@ -1,5 +1,37 @@
 Original prompt: 现在不用管讲稿了，你需要对于其来进行完善
 
+## 2026-10-20 真正 Godot 浏览器交付适配
+
+- 用户明确要求网站运行 Godot 迁移版。先前 `49332ec` 的网站是保留的 React/Phaser 构建，不作为 Godot 发布或 Godot 验收证据。
+- 新增独立 Godot 4.7.2 Compatibility 单线程 Web 生产预设、中文启动页、可复现导出及 Pages 构建管线；不挂载 React 或旧 iframe 混合实现。正式生产继续关闭章节跳转和原型入口，保留主线及三个独立校园漫游。
+- Web 文件选择、JSON/PNG 下载及原网页存档迁移复用现有严格 State 校验。原网页 localStorage 主存档和备份仅在玩家明确操作后导入，原始字节保留；Godot 自动存档使用 IndexedDB。运行状态接口只有返回副本的只读 snapshot。
+- 首轮真实 WASM/PCK 已通过 Chrome、Firefox、WebKit 的启动/输入/刷新恢复及触控模拟；CUA 实际进入 Godot 主线并操作闹钟和手机主页。具体记录见 `godot_native/exports/verification/godot_web_20261020/` 及各分项目录。实体手机、旧浏览器与听感不能由这些模拟覆盖。
+- 媒体专项真实发现旧包后台循环音轨仍推进，循环感知的有效负控保留。最终适配通过浏览器 visibilitychange 同步暂停原生音轨，并以排除后台时间的演出时钟保存既有 cue prefix 与手动暂停所有权；原生针对性 4769 项通过，最终 Wasm 的循环解包音频／OGV 后台恢复及三维追逐输入专项通过。不能采用早期弱判据的音频暂停结论。
+- 本地最终导出 runtime 输入 SHA-256 为 `0dfafbba30cbe89fb356b9cb861af192450a3c54ac8f5133fc466d9a40b9be62`，PCK 为 `de9d88937ef29f5a98de380219d0f7b1c01382e1fa4f0da3064e2e03a1e14454`，主要启动资源 579262228 字节。此未提交构建如实标记 dirty；远端 CI 必须从提交重新构建、验收并记录自己产物，不伪改本地来源，也不假设跨平台影片编码字节完全相同。
+- 快速普通存档导入三组对照通过；合法早期 C4 地图到 C3 骑行档在约 350ms 后直接读取 IndexedDB 的主／备份摘要，与内存摘要及真实刷新后的摘要完全一致。早期章末灯夹具后的一次时序异常未独立复现，保留原始记录；本轮没有据此改动 Godot 内核异步同步机制，也不宣称任意瞬间关页均有事务确认。
+- 最终本地完整浏览器矩阵 `242/242`、三个视口通过，覆盖六词三阶段及中断长按、C1→C2、C3／剧场／湖畔衔接、C4 真实 A1、三维骑行、原网页显式迁移、JSON／PNG、触控及真实刷新；报告 SHA-256 `1bf41dd4e09729f2b2bae93eca5c3931f935357d54ab88d015ad242183465abf`。Firefox／WebKit 基础桌面与触控模拟 4 例 56 项通过，WebKit 协议模拟真实 visibility 状态的媒体恢复 21 项通过；Firefox 自动化固定前台状态未覆盖后台验收。线上 CI／部署结果单独记录于发布 PR；部署前不将本地测试写为线上通过。实体手机、旧 Safari、听感、完整四章连续人工通关和首次约 579MB 下载体验仍未验收。
+- 构建与验收方法分别见 [Godot Web 发布说明](godot_native/docs/GODOT_WEB_RELEASE.md)、[浏览器验收说明](godot_native/docs/WEB_EXPORT_ACCEPTANCE.md)、[平台边界](godot_native/docs/WEB_PLATFORM_BRIDGE.md)。来源清单、真实 PCK/WASM 哈希和 CI 发布结果独立记录；旧 Web 回滚来源保留。
+
+## 2026-10-20 网站上线与原生局部反馈回归修复
+
+- 用户明确确认只额外允许 `codex/godot-complete-20261019` 发布；原网址已以精确 `49332ec` 通过 Pages #4 上线，主分支未合并。线上 436 资源／876 HTTP、四个生产场景、C1 24 项与 C4 真地图就绪通过；旧版保留可回滚。
+- 补强 C4 smoke，等 entry ready、实际地图输入及阻塞遮挡层退出后再取图；补丁实际四场景重放通过，后台 transport 仍可继续预热。
+- 原生 CI 四专项的即时反馈回归在 4.7.2 同源重现并修复：设备原局部读面与追逐失败三秒恢复，普通 FIFO 保未读；新剧情接管按 revision/text 只退自己旧提示。十二定向（9021 行为／738 解析）及十五 source catalog 通过，有效旧 Main／撤销退役负控保留，不冒称完整原生套件全绿。
+- 详情与精确证据见 [网站发布与局部反馈修复](godot_native/docs/WEBSITE_DEPLOYMENT_AND_LOCAL_FEEDBACK_20261020.md)。网站继续固定旧发布源码；原生新产物／新提交 CI 另验。服务器因仅公钥认证未上传，未据此升级资源。
+
+
+## 2026-10-20 第一章文字发现与通知阅读面（隔离候选）
+
+- 用户指出旧拦截太短、缺少操作发现，通知与剧情阅读面互相覆盖。本轮在 `/tmp/codex-755-c1-ui` 改为六个目标文字、三个语义阶段：`等`；先后不限的 `经度 / 纬度`；按原句顺序的 `旁白 / 还没 / 说完`。错误框仍是实际移动挡板，真实扫掠接触才参与判定。
+- 错词、次序错误和目标漏出暂停当前阶段并解释原因；回看暂停运动和处罚，继续仅重发缺失目标，保留已完成阶段及当前收集集合，不以第三次失误强制清零，也不会自动通关。六词映射原有三个控制器证明，原 `1400ms` 锁定、四句对白、白屏收尾和存档结构保留；局部词流不新增存档推进权。
+- 普通通知按序显示、合并重复，在活动／剧情占用期间保留剩余阅读时间；有口播时钟的字幕即时显示，不进普通通知队列。手机采用下方说话者／正文阅读带，C3／图书馆使用不透明暖纸；原有场景字幕、弹窗预留行、Room302、虚拟跑与 RPG 单字幕 owner 保留。
+- 定向证据：Web 模型 `52/0`、真实应用无头浏览器 `27/0`、共享通知浏览器 `30/30`；原生 C1 初轮九阶段记录保留，实际 GUI 随后发现跨帧按钮 press 丢失；修后六项定向通过，强化根输入 `37/0`、模型、原音频、自动化四章衔接与 `736` 脚本解析再次通过；原生通知十八项有效定向覆盖、专项 `32/0`，解析 `736` 脚本无失败。断言数不是完整玩家旅程覆盖率。
+- 实机部分验收：修后通过回看／继续／`R` 与键盘移动，已留下 `等 → 经度／纬度 → 旁白` 共 `4/6` 个目标；错误后保留经度只补纬度的流程已观察，该次记录停在第三段阅读；最终源码另经正常入口重启，签到存档保留，现停在第一段完整线索。CUA 鼠标拖动未观察到窗口移动，不记为人工拖动 PASS；最终长按／对白／白屏尚待实机收尾。
+- 计时仅为测试模拟：Web 模型 `59.1s` 不含原七秒黑屏与部署，浏览器 `64.2s` 仅驱动主循环且漏计额外故意失败的 advance；原生零失败模型约 `57.89s`／本地场景时钟约 `80.06s`。这些都不是人类解题用时、难度 benchmark 或强制等候门槛。
+- Gemini 本次实际为 **3.5 Flash-Lite**，仅提供文字与前端 UI 候选；Argon 额度不可用。只部分采纳并人工纠错，没有据其后端建议改写权威，也未新增有声剧情。
+- 本次本机验收已完成：Web release `38/38`（`83139ms`，四项正式 smoke）；native 完整原轮 `419 = 416 PASS / 3 FAIL`、退出码 `1` 保留。两项测试改用真实音频播放时钟，另一项进一步发现并修复 world 通知到期卡住／State 反馈绕队列；完整原轮后只改变 Main/world、三个既有测试及一个新测试六路径。最终官方增量 `19/19` 加四个 world 定向、扣重共 `22` 不同阶段通过，解析 `737`；修后真实 Main 三尺寸 `81/0`、合法种子 `43/0`，原始失败与有效负控保留，不声称完整 `419`／新枚举 `420` 一次全绿。
+- 最终 runtime `2660` 文件在增量测试前后摘要同为 `bc7c077fc5f5f2c03b6765fa27240fe34ebdee82f02e395a4250fe175e792056`，原生 `3593` 输入亦无漂移。PCK／ZIP 由最终冻结提交另行生成，准确验收见 `exports/` 对应 `*.validation.json` receipt，本文不代填新包 hash；正式发布／远端 CI 与人工残余仍各自确认。详见 [设计／验收文档](godot_native/docs/C1_WORD_INTERCEPTION_AND_READING_20261020.md) 和 [证据索引](godot_native/verification/integration_20261020/c1_reading_manifest.json)。
+
 ## 2026-09-07 校友像空格交互与一楼旧钟动态机制（本地）
 
 - 用户要求校友像只允许靠近后按空格打开，并开始构建一楼旧钟实际转动动画。
@@ -1690,6 +1722,8 @@ Original prompt: 现在不用管讲稿了，你需要对于其来进行完善
 
 ## 2026-07-19 经纬度错误框拦截小玩法
 
+> 历史验收记录：以下三次红圈路线／三次漏接规则属于当时版本，已由 [2026-10-20 六词三阶段设计](godot_native/docs/C1_WORD_INTERCEPTION_AND_READING_20261020.md) 替代；原日期、测试结果与交付指纹保留，不作为新版验收。
+
 - 签到收尾：输入 `0798` 后先短暂显示签到成功，再弹出标题为“经度与纬度不存在”的 `LOCATION ERROR` 错误框；框内明确显示 `longitude: null`、`latitude: null` 和 `ERR_GEO_0798`，随后进入红闪、过渡黑屏与序章收尾。
 - 玩法主体：序章保留 `7s` 黑屏；错误框随后落入画面，玩家通过指针拖动或 `A/D`、左右方向键移动该框，对齐底部出口并拦住旁白圆圈的三次离场路径。
 - 胜负逻辑：三次命中后进入 `1400ms` 按住锁定；提前松开清空锁定进度；累计三次未命中进入可重试失败页。控制器只在三次拦截、锁定达标且未失败时推进章节。
@@ -1840,6 +1874,8 @@ Original prompt: 现在不用管讲稿了，你需要对于其来进行完善
 - 验证边界与遗留：movementEnabled 锁定分支保持原有 setVelocity(0)+静止+toast 逻辑（校园检查点均 seed 解锁状态，该路径代码未变、经类型检查）；applyTransform 后原位 walkability 掩码障碍与原位底图像素仍在（模块既定限制）；小地图始终显示原始底图；QA 截图已全部删除。
 
 ## 2026-07-20 序章错误通知、逃脱节奏与签到码显示收敛
+
+> 历史验收记录：以下三次红圈路线／三次漏接规则属于当时版本，已由 [2026-10-20 六词三阶段设计](godot_native/docs/C1_WORD_INTERCEPTION_AND_READING_20261020.md) 替代；原日期、测试结果与交付指纹保留，不作为新版验收。
 
 - 居中通知：签到成功演出先在原签到页面中央显示紧凑的 `系统通知 · LOCATION ERROR`，正文保留“经度与纬度不存在”和空坐标；通知停留 `1900ms` 后依次进入 `1200ms` 红闪、黑屏与逃脱场景，未改变控制器的签到校验和章节推进权限。
 - 逃脱节奏：三轮旁白拦截时限由 `2700 / 2500 / 2300ms` 缩短为 `2200 / 1900 / 1650ms`；三条轨迹改为多段弯折、S 形折返和三波段摆动，并继续限制在可玩区域内。
@@ -4387,3 +4423,410 @@ Original prompt: 现在不用管讲稿了，你需要对于其来进行完善
 - 黑天鹅在 `tool_chain` 可独立检查饲料盒并获得磁铁；保留旧存档 `swan_exchange` 的小鲤鱼投喂兼容入口。两个入口都只获得磁铁，不能提前合成或阻断其他材料支线。
 - 发布前补查发现存档把黑天鹅进度错误推导为渔网已组合，导致读档丢失绳和网框。已让独立支线阶段保留真实装配事实，六种支线顺序每一步均保存/重载后继续验证，204 项断言通过。
 - `scripts/verify-qizhen-swan-material.mjs` 验证投喂只产生独立磁铁；`scripts/verify-qizhen-inventory-combine-browser.mjs` 用 Chrome／Firefox／WebKit（含 390×844）检查四件材料按钮、最终消耗/产出和投喂状态。20260907 提交范围为湖区规则、存档、物品栏、任务文案、开发检查点及验证文件，排除 `docs/video/`。
+
+## 2026-10-01 — native Godot migration started (draft / incomplete)
+
+- User explicitly revised the engine direction: full native Godot migration, retaining authored assets, story and mechanics as consistently as possible; original web project remains intact. Native work is isolated under `godot_native/`.
+- Base audited: `39ccde029b0cd25a6011739a4e4f98f8c898b2c3`. Godot 4.6.3 Compatibility runtime, native 430×860 phone and 960×540 world surfaces, single progression owner, isolated native save format with primary/previous recovery. Old web saves are rejected until their migration is actually validated.
+- Deterministic export preserves the source initial state, all JSON, and 718 asset files / 625,907,429 bytes; exact eight-world collision/mask data and provenance are tracked. Asset copies/cache/export binaries are excluded from Git and rebuilt with `sync_source.mjs`; portable release archives must include them.
+- Early chapter controllers, later chapter ports and real minigames are under parallel implementation. Initial generic phone presentations are an integration milestone, not accepted visual parity. The independent acceptance matrix explicitly tracks unresolved progression, visual, audio, collision, input and save work.
+- Verified original-source repairs: nine stale text-export App.tsx line links regenerated without prose changes; order-sensitive H3 Vite syntax regex replaced by a behavioral configuration/plugin/MP4-byte regression helper. Original quick 4/4, critical 24/24, extended 6/6 and production build passed. Production H3 remains byte-identical and referenced by the generated JS.
+- Full original single-file build attempted and was terminated by the environment with exit 137 after 767 modules; its artifact verifier did not run. This is not reported as a release pass or as evidence of a media code defect.
+- Draft PR only; no merge or deployment. Native completion remains subject to executable chapter traversals and visual comparison, not original TypeScript CI alone.
+
+### Native playable migration milestone — 2026-10-01
+
+- Completed native controller ports through the final acknowledgement, including source-semantic early evidence/tool puzzles, real prologue interception/hold, source library identity/BD chain, authentic60-second cart defense,755m chase, three spotlight acts, fishing-v4, kayak/weather,3.5 evidence reconstruction and chapter4 causal gates/four-level native3D stairs.
+- Rebuilt distinct native phone app hierarchies and original procedural/source artwork. Real cloud Godot Editor F5 checks covered alarm start/ring/close, wake warning, home app grid, WeChat routing/battery and canteen player movement. Rendering is now real native GUI; further full manual traversal/pixel comparison remains required.
+- Exact authored collision/mask records, foreground depth crops, dynamic targets, mode/scene fades, native kayak strokes, guard models, paper document inspection and item drag targets are integrated. Standard phone430×860 and RPG960×540 logical surfaces remain uniformly scaled; responsive shell has dedicated portrait/desktop tests.
+- Source117 developer checkpoints exported deterministically into compact isolated test snapshots. Native save validation rejects corrupt nested shapes, invalid enum/ranges and unsupported A2/A3 progress without real native proof. Historical browser save migration remains intentionally unsupported pending full validation.
+- Aggregate native import/startup/test/smoke checks passed; source TypeScript oracle accepts all four native fishing-v4 traces and matching chase results, and authentic defense matches3600 ticks/82 interceptions with max paper-position difference0.00039px. Corner separation, optional source features and remaining presentation/audio details are documented rather than declared equivalent.
+- Godot pack export succeeds without requiring a browser/Node runtime for play. Portable source archive must contain copied original assets and derived native media. Asset provenance stays exactly718 original files /625,907,429 bytes; generated imports/derived art are not mislabeled as original assets.
+- Keep Draft status: existing successful tests prove defined contracts, not full feature/visual parity. No merge or deployment performed.
+
+### Native fidelity and portability milestone — 2026-10-02 (Asia/Shanghai)
+
+- Supersedes the earlier native save limitation: browser SaveStore v2–35 now imports through the original source-generated normalizer. Fixed imported Chapter2 continuation, rejected invalid native story enums, and preserved native proof gates. Focused569 and exhaustive4,223 original-source comparisons have zero differences; actual persistence1,805 checks/233 imports and domain guard1,014 checks passed.
+- Restored active authored story consumers:12 Library sequences/53 lines and their terminal acknowledgement flags, final022/opening timelines, source C3 timed dialogue/approach/victory, and theater's1320ms reveal→two lines→genuine item inspector→three lines. Queues cannot be overwritten by feedback or bypassed by new interactions; ordinary source dialogue still permits movement.
+- Restored source-backed Library backpack/shelf/staff layers and shelf collision; C3 NPC feet/depth/carried trays/promo camera/queue/door/theater props; actual source-map lake motion, hull/water collision, channel chase and rain-rescue movie. Browser journal recipes render from original composition; native photo exports include verified image bytes.
+- Fixed real rendered lifecycle issues: scene fades continue while scripted input is locked; stair gallery advances to all four actual levels; critical C3 dialogue stays inside the RPG viewport and remains readable at390/430 widths; unsupported advance glyph replaced by native source triangle geometry. Phone/document/Library reconstruction and source mobile geometry remain distinct from full visual-parity acceptance.
+- Continuous campaign starts from one fresh state and reaches Chapter4 final acknowledgement:567 checks/0 failures,1,031 trace entries, actual input/session proofs and chapter-boundary save/reload. Stand-point setup is explicitly logged; this is not a full manual walking playthrough.
+- Official Godot4.6.3 Windows/Linux release exports succeeded. The exact exported Linux PCK separately passes567 campaign checks plus21 fresh/16 reload smoke checks. Actual Linux standalone GUI exercised real alarm→wake→home clicks, then process restart restored identical saved state; campus/lake/Chapter4 exported scenes rendered. Windows is cross-exported and unsigned, not Windows-runtime tested.
+- All718 original assets retain their recorded hashes. Chinese opening instructions, official engine notices and a concrete presentation backlog accompany the milestone. Existing web source is unchanged in this batch; its previously documented single-file exit137 remains an unresolved original release-stage limit. No merge or deployment performed.
+- Final frozen aggregate:77/77 stages passed (62 native scripts plus import/startup/source catalogs/oracles). A test-only MP3 teardown warning was fixed by awaiting real shell shutdown; three verbose81-check reruns and the repeated77-stage aggregate are warning-free. Production runtime and tested export bytes are unchanged.
+- Self-contained source ZIP CRC verified, then unpacked without the original repository. Resource-limited concurrent imports initially exited137; an isolated single-import/two-worker retry succeeded, the temporary override was removed, and clean startup passed. All888 runtime/data/asset file hashes match the frozen tested project; Chinese low-memory import guidance added.
+- Post-freeze compact UI review found a functional visibility blocker: at390px, world mixer/device intents can rebuild controls in the hidden phone surface. Desktop split mode and the validated controller paths remain usable, but compact device access is not accepted. A bounded Main page-intent fix is being prepared separately; this milestone does not claim mobile completion.
+
+### Compact device UI follow-up — 2026-10-02 (Asia/Shanghai)
+
+- Fixed controller-directed device pages hidden behind compact world mode, without changing State/controllers or world position. Explicit page intent reveals the existing phone surface; real device-triggered source dialogue restores its world; desktop split mode and ordinary refresh remain unchanged.
+- Generic input/caret/placeholder contrast is now explicit. Real Main/viewport694 checks cover11 required device classes at390/430/1280, authentic submissions, return/reopen, rain rescue and final lamp phone-home handoffs.31 rendered page/form/return images and124 visual checks include filled source code/numeric inputs.
+- Separate real Home/app checks confirmed missing lake location-search entrances in ordinary CC98/WeChat/Zjuding. That required story UI remains an explicit next fix; the controller campaign and this bounded device fix are not a full interactive-UI completion claim.
+- Compact follow-up aggregate78/78 passes with zero warnings. Contextual lake Weather dryer is also confirmed as a missing ordinary-app entrance and included in the separately scoped next batch.
+
+### Required lake app routes and snapshot isolation — 2026-10-02 (Asia/Shanghai)
+
+- Connected source-backed lake investigation to ordinary Home/app controls: CC98 wet-program search and witness save, Library exact catalogue/drop and saved reflection, source-timed WeChat messages, three-source map import/confirmation and real campus gate entry, and Weather selected/dropped dryer with original context guards. Saved sources remain readable and cannot regrant consumed keywords.
+- Actual Main/input623 checks at390/430/1280 and33 rendered captures passed. Weather calibration preserves physics/proof while compact text/control sizes stay readable and usable;140 layout/contrast checks passed.
+- Fixed incoming collection aliasing in State.merge_defaults without changing scalar or normalization semantics;362 checks cover nested collections and every117 repeated checkpoint.
+- Fresh single-state campaign now passes768 checks/0 failures and1,268 trace entries, including genuine compact wet-program/dryer drags, phone controls and chapter-boundary saves. Spatial stand-point setup remains explicit.
+- Deferred parity includes original campus-Wi-Fi eligibility/loading, attack/Tiyi timing/audio/interruption behavior, mixer option shuffle and named visual differences; these are not all cosmetic. Windows/physical-phone execution and live browser pixel comparison remain unverified.
+- Final combined gate81/81, zero warnings/errors; focused569 and exhaustive4,223 SaveStore cases have zero differences. Frozen889-file runtime digest72c581af9bf2119209e419fd2d8b180cb0c181d00de106ae5e2e1d503c93750e. Final Linux PCK passes768 continuous campaign and623 app-input checks plus21/16 fresh/reload smoke checks outside the checkout. Actual final Linux GUI/save restart passed; Windows remains build-only.
+
+## 2026-10-02 — Native interaction and continuous-play increment
+
+- Kept inventory slots stable during selection and added consistent mouse/touch inspection, cancellation and single-touch ownership. Object picking now follows measured artwork transforms and paint order; incompatible drops cannot select hidden compatible objects. Dragging does not expose answer-boundary grids.
+- Added optional earned-clue comparison and a clear unfinished-prologue resume surface without introducing save fields, rewards or puzzle solutions. Restored the photo brightness consumer and refined paper/reflection material with reduced-motion support and immutable texture reuse.
+- Restored the ten-point virtual-run track/results and inline CC98 gamepad exchange. Actual cloud CUA covered wrong/repeated run points, completion/Return, earned gamepad purchase, normal restart, desktop drag installation and manual movement. The compact world still lacks its inventory surface; that explicit follow-up remains open.
+- Added five original native effect resources for six prologue cue/asset pairs whose source recordings are silent. Actual CUA mixed PCM matched all16 expected renders, retained narrator tails and showed no clipping; subjective speaker/listening acceptance remains unverified.
+- Validation:123 stages verified against one unchanged production hash. Two aggregate attempts exposed four fixture clock assumptions; test-only corrections preserve the380ms/1150ms/360ms and real80% audio boundaries. Final affected tests passed independently; this is not described as one clean aggregate run. Both fresh source and exported-PCK campaigns passed792 checks through Chapters1–4 with1,296 trace entries; they remain automated controller evidence, not complete manual playthroughs.
+- The standalone Linux executable booted without Node on PATH. Packed native startup/save/reload passed32/28 checks, with1,701 packed resources and no browser runtime files. Actual executable purchase/save/reopen used the existing earned profile. Full chapter-by-chapter manual and visual acceptance continues; Windows execution and physical-mobile testing remain unverified.
+
+## 2026-10-02 — Compact inventory and chapter device continuity
+
+- Compact world views now expose an expandable item bar with stable slots, deliberate drag versus scroll handling, and cancellation across overlays and orientation. Actual cloud mouse/keyboard replay installed the earned gamepad and moved at 390 and 430 px, with landscape/portrait continuity. The short portrait exploration viewport remains a separate, explicit improvement target.
+- Added native shuffled canteen mixer and theater keypad/program panels with persistent in-panel drafts, source close/retry behavior, readable compact layouts and current refusal feedback. Restored source canteen foot-depth/foreground opacity. Drink-machine choice prompts and menu/bike presentation remain outside this increment.
+- Interlude retries preserve solved evidence; ring keyboard navigation, naturally finished audio progress, and ordinary Home Photos routing now follow the source lifecycle. Chapter 4 has six source-backed device previews/controls, room context, the real 1,500 ms exterior door handoff and clipped lamp artwork.
+- Validation: 140 stages reconciled on unchanged production. The initial full run passed 139; its obsolete generic-device fixture was replaced by real source controls and timed door input, then passed 857 checks. A clean repeat was interrupted after early-game tests, so this is not a single clean aggregate run. Final test-tree digest: 8ad1f8a7e5f9d787de7a7b1817a249a5a96d03fad040305e106b3bff282d987d.
+- Fresh source and exported-PCK campaigns each passed 792 checks through Chapters 1–4. External harnesses supplied no runtime overrides. Native-only packed startup/reload passed 37/33 checks over 1,717 resources with no browser runtime and no Node on PATH. The standalone Linux executable booted and actual earned-save play used the note in CC98, opened the matching thread, and retained progress on normal close.
+- Runtime digest: 8b9489e30235a84aa79abc4031b53b4b550814c72bef2c0107dd007c86a33db5. PCK digest: 2c98c7f6c564ff8bc029595f4bfb4e28e09115707e3317fbe0968ea416e813d7. Automated, seeded chapter-local visual, and continuous earned CUA evidence remain distinct; full manual coverage, Windows execution and physical-phone acceptance are not claimed.
+
+## 2026-10-02 — Library clue handling and canteen controls
+
+- Added an explicit copy action for the already-earned catalogue title, public Library location context, a visible rule-reading action, direct compact scene return and world focus after closing the bag. Corrected repeat catalogue feedback without recreating a consumed clue item.
+- Drink machines now present source Take/Cancel choices. Canteen menu and bicycle panels use source controls and readable compact layouts; the original bicycle drawing and tissue/wage world drops share precise visible-art picking. Seeded chapter-local CUA covered explicit drink cancel/take and actual bicycle item drops; these are separate from the continuous earned route.
+- Validation reconciled155 stages on unchanged production. The full run had four harness failures: a parent/child key-helper collision and two missing source-root arguments. The final affected parse/lake/compact and executed-source checks passed after test-only corrections. Original failures remain recorded; this is not one clean aggregate run.
+- Fresh exported native campaign passed795 checks across Chapters1–4 with1,302 trace entries. Native-only startup/reload passed37/33 checks over1,725 packed resources, without browser code or Node on PATH. Actual standalone Linux play reopened the earned presence proof, checked corrected catalogue guidance, returned to the portrait scene and saved normally. Full manual playthrough, Windows execution and physical-mobile acceptance remain open.
+- Frozen runtime SHA-256: e4b62b3717fe067d8ed64efd4e03413006317c2d24ef40597cb022b3c5b51a4f. PCK SHA-256: 27203c442f70a2a67d8eb4848dd4180fbc81ff0514ac050e3b1329970e108973. Optional floor-tap routing and inline Tiyi supplement remain a separate increment.
+
+## 2026-10-02 — Mobile floor routes and Library evidence forms
+
+- Compact empty-floor taps route around existing visible collision geometry, retain the original movement speed and foot shape, and cancel on manual input, camera changes or modal ownership. Arrival never activates a story target. Room 204 furniture dragging keeps priority over walking.
+- Tiyi now presents the original three-field presence task inline, with earned clue references, source steppers, retained draft/rejection text and an integer-valued receipt. The existing proof validator/reward is unchanged. The final content inset keeps text clear of the collapsed inventory handle while scrolling.
+- CC98 replies use measured wrapping and integer floor labels. A visible jump reaches the four full-card drop targets, preserving the original evidence consumption rules and persistent rejection feedback. Actual earned CUA replay covered wrong slot, miss, repeat, four accepted drags and the authored text-only briefing.
+- Validation: the full 164-stage run passed 163 stages; one obsolete app-identity fixture failed. Its actual inline-form replacement passed179 checks. A subsequent bounded Tiyi inset change passed the full script parse,179 identity and508 actual-Main checks. This is a reconciled gate with a documented revision boundary, not a single clean aggregate run.
+- Fresh final PCK campaign passed795 checks across Chapters1–4. Native-only startup/reload passed25/21 checks over1,731 packed resources, with no browser source or Node on PATH. The standalone Linux release was then operated at390px from exact earned-save copies: scrolled form/receipt text remained visible, real keyboard7/47/3 input submitted successfully, and the proof/receipt persisted.
+- An initial native-only harness mistakenly passed an unsupported external script option to the release template and timed out. Verification was rerun against the identical PCK using the official engine; standalone executable GUI evidence is separate. A prior long passive Tiyi recording was killed before finalization, so its available screenshots/save support state-flow observations only. Full manual, physical-phone and subjective audio acceptance remain unfinished.
+- Final production SHA-256: 2e75750208c26c1db2ec0280dd261fb5a7c5917de59a98039ecc7d9ba1ac42de.
+
+## 2026-10-03 — Library feedback and canteen waiting view
+
+- Added local selected-reply order, ordinal state, Undo and Review in CC98; recovery cards now keep readable persistent rejection feedback and a collapsed-rail inset. Validators, code order, evidence consumption and canonical document recall remain unchanged.
+- Primed CC98's existing theme before mounting, removing measured repeated default-font shaping. Actual thread/selection replay and paired construction timings are documented separately.
+- Waiting canteen paper sessions retain useful portrait exploration space; the genuine proximity trigger synchronously restores the source camera contract. The first aggregate exposed a one-frame scale defect, which was repaired before the final clean run.
+- Final frozen aggregate:169/169 stages passed, exit0. Fresh Linux and Windows exports succeeded; the final PCK passed795 controller-campaign checks and native-only25/21 startup/reload checks. Actual exported Linux390 replay verified wrong-card recovery feedback, preserved1/3 progress, selected BD contrast and local Undo. Windows remains build-only; full manual/physical-phone/hearing acceptance is unfinished.
+- The prior release's ObjectDB teardown warning remains visible on close and has a separate diagnosis task; no runtime script error occurred. Tiyi oracle CLI freshness checking was corrected and gained9 tests; the old accidental output matched the fixture.
+- Final production SHA-256:608a7bdd22feba16a9454d939697cba57e847993574603ace6c3f64b8bd04951. See `godot_native/docs/LIBRARY_FEEDBACK_VALIDATION.json` for exact export hashes and revision scope.
+
+## 2026-10-03 — Canteen objectives, portrait dialogue and native close
+
+- Investigation records now prioritize the source-gated current canteen task over foldable retained history. Actual earned play read the auntie goal, opened/folded129 history rows, then observed the1/3 next-step update after a correct return. No evidence or log is discarded.
+- Ordinary C3 timed dialogue preserves the tall mobile exploration viewport, with readable measured subtitles above actual touch controls. Five authored cinematic owners retain canonical source camera contracts. Actual correct-return and post-reward talk verified this in390px play; final standalone Linux replay corroborated it.
+- Native window close now awaits existing audio-owner shutdown once. A negative control reproduced four leaked playback/stream objects; the corrected fixture and actual source/exported window closes retire them cleanly. The cloud driver's unsupported V-Sync warning remains.
+- Continuous earned play completed the three dirty trays, a clean decoy, empty-hand guidance and hands-full refusal, then saved2.00cash, wages and tissue. Bounded recordings stop before some later rewards; those outcomes remain screenshot/save evidence, without a listening claim.
+- Final frozen aggregate172/172 stages passed in one clean run. Fresh Linux/Windows exports,795-check PCK campaign and native-only25/21 startup/reload checks passed. Windows remains build-only. RuntimeSHA8b6fb1e48645d5f483ed46ab04a81a9015a4fe77d44e768c3176f2db6cb45f8f. Modeling/tile prototypes, post-tray objective continuation and other later refinements remain separate.
+
+
+## 2026-10-03 — Paper-defense recovery and mobile play
+
+- Restored ordinary saved-phase defense entry, explicit Return after Exit, and same-player music resume after paused Retry. Portrait now separates readable controls, room overview and action view; source simulation, collisions, RNG and60-second requirement remain unchanged.
+- Restored original pickup task hints. Journal Return preserves its world destination across rotation; defense admission also retains world intent through victory.
+- Prior revision passed183clean stages. A later one-line admission correction passed the full305-script graph, affected input/owner/completion checks, fresh exports,795-check packed campaign and native-only25/21 checks. This is an explicit revision boundary, not a clean184-stage final-run claim.
+- Continuous earned play won the defense and saved campus chase_ready. Final standalone Linux replay on an unchanged earned copy won again, automatically returned to the world, and saved; desktop-to-portrait journal Return also passed. Brief victory-line pixels, physical devices and full manual campaign remain limited as documented. See `godot_native/docs/CANTEEN_DEFENSE_RECOVERY.md`.
+
+
+## 2026-10-05 — Recovery reading and the original C4 route to Room204 (proposed scope)
+
+- Recovery reading pages reuse the existing inventory anchor so the collapsed bag rail stays clear of clue text. The independent final package and actual desktop/390/430 checks are documented in RECOVERY_READING_INVENTORY.md.
+- C4 restores the original bakery contact/visibility/objective handoff, permits opening the required hall clock while the previous time is still active, and restores the original elevator interval display and accepted world-film visibility. Controller acceptance, original story, timing and artwork remain authoritative.
+- The earned continuation actually read104/105 and A3 references, completed all four stair levels, saved/restarted at A2 and walked into Room204. Canonical main and earned side-copy provenance stay distinct.
+- One Room204 discussion table has an independent native2D scene for its original sprite, source foot shape and pick shape. Actual desktop/390 drags restore the authored three desks through the existing controller, retire the table, and clear its old footprint. Normal restart preserves the result. The unchanged desktop baseline is pixel-identical. This is one object, not a completed whole-room or all-map conversion.
+- The bakery and reading candidates have separate packaged checks. Later clock/elevator/table candidates currently have focused/affected source-run checks and actual CUA evidence; a final combined export remains pending scope selection. Actual second portrait table reload was426×860; exact430 is scripted coverage. Dummy audio, physical-device input and remaining full-game acceptance stay open.
+
+
+## 2026-10-05 — Pending native C4 combined source-restoration validation
+
+Nineteen isolated C4 route/object/presentation patches were composed in recorded order on the published Godot base. Shared Main/World snapshots were not substituted wholesale. The initial incomplete assembly and every test failure are retained. The final frozen runtime closed 254 stages (227 native scripts plus import/startup and source contracts). Twelve initial failures reconcile as ten canonical-profile reruns and two updated source-control fixtures. Compact device navigation passes 1,242 checks; controlled continuous chapters 1–4 pass 815 checks, including source floor selection, both chase platform acknowledgements and original normal lamp duration. No runtime file changed during the full run or fixture reruns. This is reconciled validation, not an uninterrupted pass or manual skill acceptance.
+
+The integration fixes ordinary reload of controller-validated reduced-motion closure proof. Old proof without a mode still requires 5.8 seconds. Normal/reduced round trips, invalid short-proof rejection and unchanged actual legacy completed-save reading pass. The original SaveStore differential passes 569 cases.
+
+Proposed source/test/document union: 75 paths. The 35 import-generated UID companions are inventoried separately. Git scope is still unselected; no staging, commit or publication. Original art is retained. Extraction/whitebox prototypes and generated BUCT/art experiments are excluded. Canonical campaign save is unchanged. The earned forward-copy ending and ordinary reload are in prior candidate evidence; The fresh final combined Linux export passes 1,509 packaged checks and four actual ordinary save-copy sessions: desktop/390 lamp acknowledgement and completed reload; original second-table placement, retirement, source-foot-space traversal and six-piece reload. The package is a local development preview, with Dummy audio and no all-platform or unassisted skill acceptance. Manual ledger remains 325 operated / 10 formal, 203 experience notes.
+
+## 2026-10-08 — Bounded native fishing presentation
+
+- Native fishing now uses the separate cleanplate/actor assets, compact direct-water controls and tension-linked fish, upper-body, rod and line motion. Original artwork, rhythm model, clock, charts, controller rewards, saves, audio, Main and World remain unchanged.
+- The isolated project was assembled from the verified remote Godot base, not the unpublished regional overlay. Original 718 asset hashes and source JSON Git blobs match; four replay fixtures remained unchanged.
+- Import/parse and all 12 focused fishing/chapter/reload-boundary scripts passed. Exact scope, check counts and evidence limits are in `godot_native/docs/FISHING_TENSION_PRESENTATION.md`. Aggregate CI and independent review are separate merge gates; no fresh export, physical-phone or full manual-campaign claim is made.
+
+## 2026-10-09 — Independent native mixer layers and clear feedback
+
+- Rebuilt the tasting-counter presentation with the clean source backdrop, independent RGBA glass and bottle/cap parts, clipped liquid layers and a fixed world cup contact. Only the mixing counter changes its backdrop; the separate drinks shelf remains unchanged.
+- Simplified bottle labels to drink names, moved the recorded shelf clue below the title, and reserved one bottom status strip for either the operation hint or source feedback. No recipe, ownership, shuffle, controller reward, cancel, save or immediate third-pour closure rule changed.
+- Final source on integrated base `b1177e10` passed import/parse, 14 focused native suites (27,322 checks) and two executed TypeScript-source fixture checks. Real cloud-desktop input covered desktop success/cancel/reentry, mobile-sized failure/missing feedback and 430×860 close/bounds. Independent source review found no blocker. Scope and evidence limits are in `godot_native/docs/MIXER_LAYER_SEPARATION.md`.
+
+## 2026-10-09 — Source-faithful native canteen victory paper
+
+- Restored the validated terminal running frame, mirror and angle through the victory presentation; all position, independent X/Y scale and angle channels use the original quadratic 760/160 ms tween, 260/60 ms hold and hidden idle reset before dialogue.
+- Shared paper rendering retains existing defaults and adds optional independent scale axes and source RGB tint. Controller facts, replay proof, rewards and saves are unchanged.
+- The offline original-method oracle passed eight cases and 112 timing samples. Native controller spoof-resistance, transform/tint and actual-view tests are included but remain unrun while the shared host is reserved for generation. No Godot/browser process, asset import, publication or GUI acceptance is claimed. See `godot_native/docs/CANTEEN_VICTORY_PAPER_POSE.md` for exact scope and pending checks.
+
+## 2026-10-12 — Native BUCT campus chooser and independent walk (Draft)
+
+- Added a default native entry chooser retaining the unchanged Zhejiang story scene and direct story launch arguments. BUCT lives under `godot_native/campuses/buct/`, with no State calls, save writes, or project-wide window/input changes.
+- Retained the approved 1448×1086 source layers, 44 independent building groups, 91 building colliders and 6,188 native repair tiles. Added a south-gate–main-building–library walking corridor, native camera/character, touch/pointer navigation, landmark cards, guide/reset/overview/back controls, eight source-pixel canopy groups and a small conditional feet locator.
+- Added source-layer, actual-traversal and repeated entry/save/UI regressions, including five desktop/compact sizes. The final walkthrough reaches the library in approximately743 native physics ticks. Exported native pack successfully resolves the chooser, unchanged story, source layers, images, font and current route JSON.
+- Resolved the observed Dummy/GLES3 teardown leak: serialized anonymous Polygon2D names collided during ground-shadow reparenting. Stable per-object shadow names preserve exact source geometry and allow all11 shadow WeakRefs to release; regressions check every shadow across repeated visits. Actual GUI confirms two campus/menu cycles, all3 landmarks and the unchanged Zhejiang opening; graphics comparison has0 changed source pixels and correct tree occlusion. The original aggregate completed308 stages; its only failure was the pre-fix entry teardown, now independently rerun with277 passing assertions and no errors. Final GUI exit is clean. CI and a final aggregate rerun remain under review. Local root Web release reached32/35; single-file build was killed137 and its dependent artifact/browser checks lacked output. No merge or release is claimed.
+
+### Save-fixture safety follow-up
+
+- The initial published head `b60bca1` completed all 309 local native aggregate stages and passed GitHub Web CI. Native GitHub CI is checked independently.
+- Guarded the BUCT entry regression before any State mutation or save write. Godot's resolved user-data directory must exactly match a declared fresh test sandbox, and primary, backup and pending saves must not exist. Unsafe direct invocation exits 2 with a clear message.
+- Added a copy-pastable Node runner that creates isolated directories and exercises eleven rejection cases against disposable empty/sentinel profiles. All rejection checks preserve save bytes; all 269 source-layer, 101 gameplay and 277 entry assertions still pass. The standard native validator also declares isolation and runs the rejection checks. No production runtime, map artwork or desktop access changes are included; final aggregate/CI results remain exact-head checks.
+
+## 2026-10-12 — First genuine-alpha BUCT library in the full campus (Draft)
+
+- Based on the exact BUCT entry head `b6f3f260f682dfe26ef6cdbe9eac4fdbad74d77a`. Replaced only Chaoyang library with three separate unchanged generated PNGs: true-alpha body, continuous repaired ground and independent translucent shadow. Its original world registration is retained; this is same-style reconstruction with approximately 1–3 source-pixel drift. The other 43 groups remain legacy source-campus UV groups.
+- Removed the old library UV body, both baked shadow polygons, four old bodies, old underlays, click polygon and navigation footprints. Added six inferred ground-footprint collision polygons, alpha-only selection, hide/reset controls and explicit native lifecycle handling. The existing visitor, original south-gate/main-building/library route, story state and saves remain unchanged.
+- Native full-campus Y-sort uses 140 merged strips of the new standalone RGBA texture, sharing one material. Old trees and the visitor stay in the same native depth system. A bounded geometric ground mask fully covers the old body/shadows while preserving peripheral original trees/paths; original PNG files are not edited.
+- Cached the inherited 6,188-cell static repair SubViewport once per playable instance, retaining its texture for all old repair polygons. Identical 1440×900 llvmpipe comparison: baseline ALWAYS 5,917 draws /45.424 ms median; baseline cached 178/13.457; new library ALWAYS 6,053/53.420; new library cached 314/16.659. Caching saves 5,739 inherited draws; the library adds 136 net draws and observed +3.202 ms cached median, not a claim of campus-wide scalability. Whole-scene nodes increase 432 to573.
+- Current final focused checks pass: 284 source-layer, 115 playable route and 312 entry/mobile assertions plus 11 save-fixture rejection cases. Actual OpenGL checks preserve every source pixel outside the patch, have zero hide/absent or cache image differences, and pass ten local-facade and four old-tree depth probes. New strips differ from the same full RGBA reference at52 pixels by at most one channel level. This is not source-artwork identity.
+- Moved configuration side effects out of removable assertions and added a static regression. Independently loaded the exported native PCK and checked all new assets, binary mask,140 strips/six collisions, alpha hit and hide/reset. This uses the available debug engine; a release executable is not claimed. Whole-map manual entry/hide/reset/return, portrait/landscape controls, original route 3/3 and the corrected reset status pass. Two human round trips are confirmed; automated tests cover repeated lifetimes. See `godot_native/docs/BUCT_LIBRARY_VALIDATION.json`.
+- Validation history remains explicit: first full native run 310 = 286 passed / 24 failed, exit 1. An interrupted retry had 14 confirmed passes / 2 failures / 14 unconfirmed. After media/dependency/cwd setup, a complete 30-stage rerun reached 29/1, exit 1, with only the legacy lake fixture rejecting workspace-backed temporary data. A two-file test-only isolation adaptation now checks the declared normalized path, actual Godot data path, fresh launcher receipt and absence of all three save files; 17 negative cases preserve bytes and the positive lake oracle passes 416 checks / 25 native disk saves. Final rerun of all 24 original failures plus six affected/setup stages is 30/0, exit 0. This is split-run evidence, not a single clean 310-stage result; exact-head CI remains pending.
+
+## 2026-10-12 — Haidian entry and one genuine teaching building
+
+- Added `OpenBuctHaidian` beside the unchanged `OpenBuctCampus` and story entry, based on merged `1c737e2b`. The 1448×1086 Haidian scene retains its original north entrance and bounded teaching-building/library route. Only one connected teaching building is now a genuine RGBA object with alpha picking, separate contact shadow, native foot collision, depth sorting and hide/move/reset; Rongmao library and other campus/context registrations remain legacy source layers.
+- Preserved generated PNG bytes, strict uniform image-to-world transforms, three exact ground ROIs, source foliage/court masks, and RGB-mipmap/alpha-LOD0 filtering. Hidden ground is inferred artwork; a building-shaped outer boundary and two small eastern grass patches remain. No geographic reconstruction or all-campus completion claim.
+- Local verification: static source295 checks; Chaoyang source284 and walking115; Haidian60, 516 route physics ticks with zero illegal feet; entry797 including repeated cross-campus/story returns, save bytes, full input events/deadzones, window settings, failure return and WeakRef cleanup. Actual GPU integrated normal/hidden images match accepted standalone source with zero pixel difference; source protection/reset and two-zoom alpha comparisons remain exact. Whole-PNG/strip RGB has49 pixels within1/255 interpolation difference, with no alpha-support loss. Actual392×844/667×375 UI rendering passed. Manual two Haidian visits, roof selection, H/T/B, return, Chaoyang and original story entry passed with clean exit. Historical aggregate validation remains assigned to remote CI at the published head.
+- Single-building source benchmark on the same1280×800 llvmpipe target: legacy150draw/420nodes, median8.621–8.726ms; new Sprite172draw/834nodes, median10.882ms/p9513.358ms. Texture memory50,745,989→88,955,750B. The additional414nodes and38,209,761B cannot be extrapolated linearly to a whole-campus rebuild. Polygon fallback remains; future object-count/memory work is separate. No PCK export, unrelated PR dependency, story/State/project or Chaoyang asset changes in this patch.
+
+## 2026-10-12 — Approved student in the formal BUCT full maps
+
+- Attached the approved four-direction student to the actual Chaoyang and Haidian campus visitors. Original PNGs, registration profile and visual renderer remain unchanged. The map adapter uses uniform 18-source-pixel height and a local 2.6-body-height stride calibration driven by actual post-collision displacement. Original movement speed, foot collider, navigation, input ownership and story state remain unchanged; no new interiors or formal Changping entry are included.
+- Walking-view landmark labels now avoid the registered student's full-cycle screen bounds while retaining their original anchors, map-area bounds, overview layout and click actions. Actual rendering confirmed the complete student at both reported overlap positions. Native four-direction walking/stopping, physical-key input and both maps' front/back student-sprite occlusion were verified.
+- Relevant verification passed 899 source/runtime assertions and 15 isolation/platform guard cases. Entry regression reported 797 assertions and zero assertion failures, including repeated returns and preserved saves/state/input. The full original-asset import was killed with exit 137; three existing story textures lacked completed imports when resuming the story, so the error-free aggregate runner correctly exited 1. This is not a clean full-aggregate pass. Complete CI on the new published head remains pending.
+
+## 2026-10-12 — Changping full map in the formal BUCT chooser
+
+- Added the independent Changping entry on exact remote #125 base `88a4f2c45a70d3a7d052fd6f66bc30c27bba1d47`, reusing the existing shared four-direction student. The original 950×1656 source, 53 legacy UV groups, 81 bounded paving regions and 41-point south-gate/First-Teaching/library route remain byte-identical. These groups include structures and unverified exterior context; this patch adds zero genuine-RGBA buildings and no interiors. The complete picture is present, but unreviewed public paths are not yet opened.
+- Added responsive three-campus/four-entry selection, touch/pointer walking, scrollable landmark information, uniform portrait overview and student-safe labels. Changping owns only its new `buct_changping_*` actions and removes/releases only those actions on exit/focus loss. Existing Chaoyang/Haidian/shared character/State/story implementations are unchanged.
+- Focused headless checks passed with exit0: 1,234 entry/state/save-byte/input/descendant-release assertions; 86 actual-student assertions including Changping's original three-landmark route in759 physics ticks with zero illegal feet; 85 label-layout assertions. Read-only source guards passed60 Changping,271 unchanged Haidian and37 shared-student checks. Full story artwork/resume was explicitly skipped in the minimal stage; complete remote CI remains required.
+- Actual desktop GPU passed854 assertions with zero failures; all four injected keyboard directions moved the real feet10.2667px each. The first854/4 failed driver report is retained; correction uses Input.parse_input_event without weakening movement assertions. Manual verification completed two Changping entry/return cycles, W/S movement and release/boundary stop, E/Esc information, M full-map view, plus one Chaoyang and one Haidian return. 1280×720,390×844 and667×375 render layouts passed. Exit had no ERROR/RID leakage, only the known llvmpipe VSync warning. No physical touchscreen or full-story visual claim. See `godot_native/docs/BUCT_CHANGPING_VALIDATION.json`.
+
+## 2026-10-12 昌平第一教学楼：原位透明对象与三面深度
+
+- 本改动基于昌平正式入口 Draft #126（远端 `3ce2b43ff9fe53c98958909fdd9d11f3b752924b`）。补丁只含昌平第一教学楼及对应测试，不包含其它校区建筑、室内或新道路。原950×1656地图、18源px四向学生、速度88、3px脚碰撞、State及原41点/3地标主线保持。
+- 一教采用一张1755×896真实RGBA，原文件SHA256 `92d71203ca4e9070651c772a27cef63ee9190f3a08bbbd8e83be846d06bc59f6`。统一比例 `0.14504525562156373`、原点 `[390.2105602416651,1083.9025528184943]`；不做非等比拉伸，两庭院六个内部探针alpha0。
+- 后横翼、中脊、前弧通过唯一surface ID与1755×3脚线表共享整PNG。当前2个互补深度pass，总预算≤8。左右庭院同列的前、后墙使用不同地脚，不能用整楼一条最下沿脚线代替。庭院中的验证脚点只作遮挡fixture，不开启院内路线。
+- 保留原两块物理碰撞和实际地面投影；旧本体、误命名为SourceShadowOrAnnex_1/_2的后翼/中脊及旧分片guard退役。实际alpha拾取可打开“第一教学楼”，透明庭院不误选。没有给普通楼提供移动/隐藏后完整净底承诺。
+- 修复只采已审核的144源px东弧、130源px门下白区，共274源像素。两张生成补片分别严格等比注册，原PNG保留；CPU证明许可白区外像素变化0。其余原树、庭院和道路不按整矩形重画。这些补片是风格匹配的地面恢复，不是原像素精确还原。
+- 生产本体PNG的.import明确启用mipmap并保留原alpha/RGB。所有原生body pass与单PNG对照复用同一个生产Texture，RGB走mip、alpha固定LOD0；surface二进制用.r8.bin复用既有导出白名单。
+- 验证：CPU/静态19项；统一stage增量导入exit0；原生904/0，涵盖实际mipmap、alpha拾取、两碰撞与两次整campus子孙WeakRef释放；三校原学生回归86/0，昌平主线实际759ticks、动画575ticks、非法脚点0；首轮真实GPU13/0、exit0，alpha支持0差、RGB最大1LSB，真实学生前/后遮挡四组通过。首轮截图driver的旧screen-space标签未刷新已保留为历史；只修fixture刷新后，第二轮真实GPU仍13/0且exit0，正常/选中截图地标位置正确，不遮学生。
+- 短实机手工完成两次正式入口进入/返回，屋顶真实alpha点选“第一教学楼”、Esc关闭、左庭院透明点不选，以及导览后方向键接管/释放。手工没有完整步行主线、庭院通行或实体手机测试；场景正常退出0，无ERROR/RID，环境仅有VSync不支持提示。
+- 本轮完成第一教学楼这一栋真实RGBA的原位接入验证；不能称全部53个旧分组都已成为逐栋RGBA，也不能把既有主线说成全校园道路可走。
+
+## 2026-10-12 昌平图书馆：独立透明楼体、凹立面地脚与手工往返
+
+- 本补丁接续第一教学楼 Draft #129 的准确提交 `dabe1efa13ebf1a77dfab0326ae76f2351c4ee69`。只接入昌平图书馆这一栋；原950×1656地图、41点/3地标主线、10处路线树层及18源px四向学生（速度88、脚半径3）保持。没有新增室内、门口、湖边路线或全校园通行。
+- 1225×1284原RGBA整张保留，SHA256 `01a017d632f699907b1a56ba927373420b92062aa40a486e2564edef9171be16`。统一比例 `0.11036930895608213`、原点 `[501.6515664578408,683.7275776496026]`；中央三角玻璃是实心屋顶，东南外凹是真透明。人工核验的两面ID与两条地脚表共用一张导入纹理，RGB走mip、alpha与拾取取LOD0；不是整楼最下沿遮罩。
+- 仅退役library旧本体、raster guard和WestFacade/EastFacade深度片，保留原独立地影及邻近树、湖、道路。南GroundFootprint0原样保留；东GroundFootprint1改为实际凹立面接地线内侧4源px窄脚带，并同步现有导航blocked集合。旧东侧空气墙不再挡透明地面，但测试凹口可站不等于开放未建路线，屋顶仍不可走。
+- 实际GPU到馆、凹口与四个接地点截图未见明显旧墙重影或亮补片，因此本次不新增净地素材，也不为整楼移动/隐藏制造完整地底承诺。精确PNG.import随补丁保留，生产通过导入Texture2D加载，避免导出后读取原PNG字节的失效路径。
+- 验证：原生1016/0，接受学生回归86/0；原主线实际759ticks、动画575ticks、非法脚点0。半径3四向撞墙、凹口净空、屋顶/未建路封闭、alpha选择、信息关闭、入口返回与重复释放通过。斜足线接触误差≤0.083源px。真实OpenGL17/0，五深度alpha支持无差、RGB最大1LSB，四组学生前后遮挡通过。新增依赖无关Node源检查10/0及相对路径复现runner。
+- 短实机手工验证真实玻璃点选“图书馆”、Esc关闭、无遮挡东南空白点不误选、下/上移动后松键idle、返回入口和重新进入恢复原南门[515,1510]。另一个透明坐标落在屏幕馆牌Button上，按按钮正常开卡，不作为alpha失败。首个未交付手工logger在Alt+F4后出现ObjectDB退出警告，原日志保留；随后完全不带driver的正式项目完成入口→昌平→入口→昌平→退出，exit0且无ERROR/ObjectDB/RID，只有环境VSync提示。未改生产代码掩盖该历史警告。
+- `docs/BUCT_CHANGPING_LIBRARY.md`与`docs/BUCT_CHANGPING_LIBRARY_VALIDATION.json`记录范围和证据；没有新增导出包、实体手机性能或完整剧情验证的声明，也不能将本栋完成等同于全部旧建筑均已转换。
+
+## 2026-10-12 — 昌平原画东侧道路接通
+
+- 在 #131 精确树上增加一个原画可见铺装多边形，接通东侧直路和北侧路口前有限路段；不是 TileMap 或室内扩展
+- 保留原 41 点导览、3 个 POI、共享学生、全部真实楼体和图书馆实际东侧脚线；新增 485 个网格点全部连通
+- 新权限仅使用统一铺装并集的半径 3 圆形外边界检查；不侵蚀各个重叠多边形，不改变原先已开放脚点
+- headless 41/41，连续真实物理行走与返回 0 非法脚点；原导览、真实按键边界与松键检查通过
+- 原道路 86 个角部/旧缝问题采样如实单列，未把它们说成 86 个独立缺陷；初次测试的旧边分类失败保留
+- 源检查64/64、公共契约70/70、GPU正常/深度28/28、合法walking帧14/14；3组实际遮挡112/109/39px，人物均仍可见；实际1180×812视窗全新增叶区原渲染0差，非手工游玩
+- 正常游戏截图单独交付；受控前景测试见 docs/BUCT_CHANGPING_EAST_ROAD.md 和独立验证 JSON；只提取真实原叶像素，不把低草当高前景
+
+## 2026-10-13 昌平柳湖主池独立原画水面
+
+- 基于 Draft #133 精确 head `bca86c2b10901c0c524968e4b79f2b45845cf729`、tree `8f135d0c44e0efc56a6e81522f644fcb00e4f67e`；只处理图书馆西侧柳湖主池，南桥下水渠和荷塘不扩大范围
+- 新增一个固定地理位置的原生 Node2D + Sprite2D，原图裁框 `[317,750,163,108]` 的 7,140 个真实 alpha 水像素独立呈现；RGB 原像素不重画，底图只加同 mask 互补裁空，原大 PNG/岸线/桥岛树/共享学生/原路网不变
+- 正式导入纹理与距离纹理的实际解码像素通过 SHA 校验后才安装互补材质。缺资源或错误像素不会先挖空底图；隐藏水层是真挖空，不生成湖床
+- 岸缘内 2 源像素静止，8 像素渐变权重，最大 0.30 源像素低速微扰；alpha、地理位置与原相机保持固定，无海浪、发光或岸树抖动。岛西南原有连接使透明排除与外岸连通，不补不存在的环岛水道
+- 水面点击幂等选中，岛/透明区取消并恢复原状态提示；不创建 POI 或寻路目标，所有水像素仍不可行走。鼠标与触屏的真实输入均验收
+- 源检查 89/89；最终原生水组件 59/59；原东路连续行走/导览/碰撞回归 41/41；GPU 捕获 15/15、严格像素分析 18/18；最终人工选中/取消/再选中及原道路短按行走通过
+- 1180×812 实际 GPU 视窗：静态及三次关闭动画与基线 0 像素差；四个波相水外/静止岸缘变化均 0。实际原导览 718 个物理帧、非法脚点 0、原 3 个 POI；105 张实际 GPU 帧供 7 秒/15fps 的原比例局部微动证据
+- 保留初始 JSON 数字类型、最小 stage 字体、64px headless 输入窗口和触屏双切换失败记录；首次 GPU wrapper 的 Python 命令缺失 exit127 如实保留，单独 python3 分析为 exit0。新 test 的可选证据输出兼容未设 env 独立调用，显式无效输出清楚失败
+- 详见 `docs/BUCT_CHANGPING_LIUHU.md` 与 `docs/BUCT_CHANGPING_LIUHU_VALIDATION.json`。无整仓 clone/import/PCK，独立 Draft 由父任务交接发布，不合并，不改浙大主线
+
+## 2026-10-13 — BUCT Changping bridge-south visible-water continuation
+
+- Exact base: Draft #135, head `27f872b199b85ff24c6d48ba16928bce395e627c`, tree `a431a3a5cbdd20fe26ad9c10a93dec059ed958a5`.
+- Added only one original-RGBA static segment at source crop `[395,867,24,21]`: 72 guarded water pixels, 1,420-byte PNG. Main bridge, uncertain bridge-bottom pixels, banks, tree foliage, next crossing and next water segment remain static. No new geographic proper name.
+- Retained the existing 7,140-pixel main pool, its animation/selection, source assets and implementation bytes. Both masks have independent alpha selection and atomic complementary background ownership; both teardown orders and external material replacement are safe.
+- Validation: CPU geometry 11/11; extended existing source checker 103/103; segment native 50/50; main native 59/59; existing east-road native 41/41. Real mouse/touch selection is automated; original route/shared student and road collisions retained.
+- GPU: 7 fixed-camera stills, actual 960×720 at 4×; 8/8 pixel checks. Static reconstruction and source restoration differ by 0 pixels. Hiding segment changes exactly 1,152 screen pixels, all inside its alpha. Main-pool wave phases still differ; segment and all main-exterior pixels remain unchanged. Independent visual review found bridge/banks/trees intact and no visible bright seam/black fringe.
+- Hide preserves a real cutout; free restores that component's source-ground ownership. Static presentation is deliberate: only 22 pixels beyond a two-pixel guard and no full eight-pixel feather core. No added routes, POIs, interior, formal TileMap replacement, new art, video or other-campus water.
+- Reuses existing public source/CI entrypoints. Local stage imported only the new 24×21 PNG; no whole-repository clone/import or PCK. Full aggregate/remote CI remains publisher verification. Details: `docs/BUCT_CHANGPING_SOUTH_BRIDGE_WATER.md` and accompanying validation JSON.
+
+## 2026-10-12 — Independent Chaoyang west-inner L building
+
+- Replaced one legacy source-UV building with its generated genuine-RGBA body, registered at one uniform scale. Kept its connected main block, long eastern wing and low western annex together; restored four exact-source foreground leaf fragments and limited necessary ground repair to366 source pixels. Original campus artwork, shared student geometry, movement, three-stop route and story state remain unchanged. This fixed ordinary building supports transparent-alpha selection and neutral information, not whole-building moving/hiding or interiors.
+- Two whole-body rendering passes use per-column facade depth, three physical contact polygons and the same production-imported texture exercised by the graphics fixture. Explicit mipmap import metadata is included; body PNG bytes are unchanged.
+- Final focused verification passed115 object checks,284 source-layer checks,115 existing playable-route checks, and32 four-direction student depth samples. The actual production-texture composition has exact alpha coverage and only63 RGB pixels differing by one channel level from the whole-texture reference. Final desktop manual roof selection, transparent recess non-selection, unchanged0/3 progress and return passed; no runtime ERROR/RID leakage.
+- The combined minimal stage reported1,236 entry assertions with no assertion failures but lacked original story media and emitted loading errors, so it is not a clean full-game aggregate pass. Exact-head remote CI remains required. Component measurements were2passes,7component nodes and8,402,492 texture bytes; no whole-scene performance or completed-hidden-ground claim.
+
+## 2026-10-12 — BUCT Chaoyang connected west-road sector
+
+Expanded free walking from the existing route onto the west sports-side lane and library-west avenue. The original south gate spawn, 29 guide waypoints, three landmarks, shared student/physics, 44 building identities and genuine-alpha library remain unchanged. Added 35 conservative source-space road polygons and two bounded exact-source roadside crown groups with tiny inferred trunk feet. Kept courts, roofs, central lawn, untraced northern roads and the y≈590 planting strip blocked. No interiors or new artwork.
+
+Validation: road source guard 1,320 assertions; student 31; unchanged Haidian source 271; native new roads 41 with 1,322 real physics samples and no paving violations; existing guide 115; original source/building layers 284. Actual software-OpenGL depth checks pass four walkable poses with zero empty-background changes. Continuous road capture reaches four destinations in 763 physics ticks and 254 JPEG frames with no off-paving or sampled teleport motion. Final capture is 12.717 simulated seconds and 14.695 wall-clock seconds; one initial placement at the old west-lane junction is disclosed. Retained the initial fixture failures and original capture; final recording corrects only the capture status label. Full-repository CI remains separate. Details: `godot_native/docs/BUCT_CHAOYANG_WALKABILITY.md` and its validation JSON.
+
+
+## 2026-10-12 — Local west-road integration with accepted L and #126
+
+- Three-way merged the original-art west-road patch onto exact #126 plus the frozen accepted L building in a separate local worktree. Preserved the #126 Changping source import, all L alpha picking/card/contact/foliage behavior, original student, original campus pixels and road geometry. No semantic tiles, new road textures, frozen-patch edits or GitHub writes.
+- Checked all 2,300 nonzero-alpha L foliage pixels against both added road crown groups: zero duplicate ownership. Merged source checks pass1,322 road,271 Haidian,37 student and60 Changping assertions.
+- Focused native merge passes37 checks with1,152 continuous physics ticks from the original south-gate spawn through both branches, zero off-paving steps and no repositioning/overspeed. Separate reset/old guide reaches the original three landmarks in743 ticks. Existing road regression passes41 checks/1,322 walking samples. Both processes exit0 without script/load/leak errors. No broad repeat of already-accepted building tests and no new combined-scene video. Existing video remains labeled as pre-L evidence; full CI and whole-game state remain separate gates.
+
+## 2026-10-13 — Independent Chaoyang court-north short building
+
+- Replaced only `west_courts_north_bar` with one connected true-RGBA body at a fixed uniform scale and origin, two compact depth passes, visible-wall foot collision, alpha picking and a neutral information card. Original source map, accepted student, roads, southern courts/trees and three-POI progress remain unchanged; no interior or whole-building hide/move behavior.
+- Limited old north equipment/lip repair to exactly 201 source pixels in `[447,433,56,16]`, with zero changes outside the frozen mask. Runtime uses a 56×16 imported RGBA patch (3,584 decoded bytes), not the large generated source. Tiny dark original antialias edges remain outside the mask near `(472,437)`, `(471,439–440)` and `(497,439–440)`; the accepted body's vents are preserved.
+- Focused validation passed 50 source checks, 139 native checks and 41 original-road checks with 1,322 actual student samples. Actual normal/full-map views and real roof click, transparent rejection, card close, entry return/re-entry and clean exit passed. Optional evidence output passed normal/unset cases and correctly rejected an invalid explicit path. Prior unchanged-body GPU proof covers 24 student poses. No full-game CI or PCK export claim; independent Draft publication remains separate, and this work is not merged. See `docs/BUCT_COURT_NORTH_VALIDATION.json`.
+
+## 2026-10-13: Integrate the approved Chaoyang chain with the current campus base
+
+- Preserve the complete histories and records for both campus branches; resolve only shared progress and BUCT test-registration conflicts
+- Retain every source/native check from both runners and the existing isolated evidence-output environment
+- Production campus paths merge without overlapping edits; complete CI must verify this new combined tree before merge
+
+### 2026-10-12 — Haidian Rongmao fixed building
+
+Replaced Rongmao UV body/legacy collision and paired broad shadow/underlay with genuine RGBA body, three shared-texture exact-foot depth passes, narrow contact shadow and 141-source-pixel necessary ground repair. Fixed ordinary building supports visible-alpha selection, original information card and route access; full hide/move intentionally unavailable because the hidden core is approximate native paving. Existing teaching object, shared four-direction student, three-campus entry and story/save state preserved. Local focused headless72/72, actual513-tick legal route, real keys/clicks and six release cycles pass. Actual fixed1280×800 GL: baseline roundtrip and outside-library/protected tree/court pixels unchanged; full-map library/student occlusion reviewed. Net2draw/2nodes and17064732B texture; 16MiB budget exceeded287516B, newp9535.748ms versus baseline19.927–22.513ms, so no speedup/scalability claim. Complete remote aggregate and final exact-head CI remain separate publication gates.
+
+#### Export-safe texture validation correction
+
+Teaching and Rongmao loaders now share an imported Texture2D/type/dimension validator. Present original PNG bytes must match SHA-256; source-less .import→ctex export remains valid. Missing/unloadable/wrong-size resources fail closed. Actual6,696-byte PCK:9cases/20checks passed; deliberate absent/corrupt ctex emitted8expected loader errors. Production72checks,513ticks,0illegal feet and clean exit pass; source checks395+37+74. No export filter broadening or art changes. Combined entry test ran in a stage missing unrelated story resources; its47ERROR/2SCRIPT ERROR diagnostics are an environment limitation, not a clean full-story pass. Exact remote CI remains required.
+
+Public package regression is now reproducible via `python3 godot_native/tools/test_buct_texture_package.py --output-root <owned-workspace>`. The public runner/build/test scripts passed an actual cold-cache20/20run; only one54×58technical mask is imported into an isolated project. Each invocation creates a new output child without deleting existing data. Generated PCK/ctex/cache are excluded from the patch.
+
+
+## 2026-10-12 — Haidian clear east-street extension
+
+- Based only on accepted Rongmao PR #127 at `99c834f00fce7c57b9c7e8d971a133d8ffb1c15d`. Four narrow source-paving polygons connect the existing north spawn (963,297) through (961,313), (953,328), (944,348) to (935,368), adding 38 connected native-grid cells. The old 26 polygons, 25 guide points, three POIs and seven tree registrations are hash-identical.
+- The second new polygon has one source-reviewed west-edge vertex (950.9,316.5): it fills a 3.573597-source-pixel² paving notch that previously made the planned (954,314)→(954,318) edge fail full radius-3 clearance. The corrected edge now passes dense source and actual native checks. Foot radius, shared navigation, accepted student and teaching/Rongmao objects are unchanged.
+- Hall branch (996,316) stays closed because it crosses a planted divider; the foliage-obscured southern continuation (926,389) also stays closed. No interiors, court, roof, grass, water, new imagery, semantic TileMap or story/save changes. One small original-source leaf contour is visual-only, needed for full-student overlap at the south road shoulder; it invents no trunk collider.
+- Public source guard `node godot_native/tests/verify_buct_haidian_east_roads_source.mjs`: 228 PASS. Unchanged-base Haidian/Rongmao/export source checks: 379 PASS. Public native fixture `godot_native/tests/test_buct_haidian_east_roads.gd`: 48 PASS, 176 continuous new-road/manual-boundary physics ticks plus 515 old-guide ticks, 0 illegal feet, bad planned edges, teleports or overspeed. Teaching hide/move/reset, Rongmao alpha/real foundation collision, owned inputs and full scene release pass. Both new source/native checks are wired into existing `node godot_native/tools/test_buct.mjs`; use its existing isolated TMP/XDG workflow.
+- Actual desktop GL proof passed with 138 continuous ticks, including a real D-key event, middle/end screenshots and return to the original spawn. Zero illegal feet or jumps; default gameplay views and a separately labelled 4.6× inspection view were visually reviewed. The accepted original map/character remain intact. No video or full-world walkability claim. Full historical aggregate and exact-head remote CI remain publication checks, not implied by the focused results above.
+
+## 2026-10-13: Integrate Haidian Rongmao and street with the approved campus branches
+
+- Preserve both complete branch histories and every progress entry; union all seven source suites and thirteen focused native registrations
+- Keep existing save/evidence isolation and all nonconflicting production blobs byte-identical to their owning approved branches
+- Complete combined-tree Native and Web CI is required before merge
+
+
+## 2026-10-13 — Changping Wenli independent exterior
+
+- Replace only Wenli's four legacy visual parts with one source-registered RGBA exterior and two complementary depth passes. Preserve all three original physics bodies, existing student, route, water and Zhejiang story.
+- Keep the complete generated body and clean-plate PNG bytes. Nine-point uniform registration RMS is 1.258 source pixels. Hidden ground uses only a bounded inferred paving sample; visible contour differences remain and this is not a surveyed courtyard or new walking area.
+- Frozen local validation: source 16/16; six serial native groups 3,186 assertions with zero failures (Wenli 1,032; First Teaching 942; Library 1,062; east road 41; Liu Lake 59; south bridge water 50); actual GPU 29/29; manual movement, alpha selection, close, entry return and re-entry passed. A minimal exported PCK loaded the real scene and binary masks successfully.
+- GPU complementary passes match the common-quad reference exactly; opaque gray/map composites differ by at most one channel level. The original standard Sprite transparent-RGBA comparison retains a maximum delta of eight with unchanged alpha support. Ground changes zero pixels outside its ownership mask.
+- Add reproducible source/GPU CI checks and evidence artifact. Exact-head full Native and Web CI remain pending at publication. No local full-story run, Windows runtime, physical-mobile acceptance, interior or TileMap conversion is claimed. Independent Draft only; squirrel PR #137 remains separate and unmerged.
+
+
+## 2026-10-13 17:03 UTC — Default Changping Wenli high-detail region
+
+- Stack on Draft #138 at 72fcafd285dd388eed2735be71b60fa23f428548. Enable one coherent ground/canopy region by default: source ROI [630,615,240,240], 3.66% of campus, 216-square core. Genuine generated masters 1254-square; fixed runtime 1200-square. Visible new/old clarity transition remains. No whole-campus 4K, interiors, world-coordinate warping or route expansion.
+- Keep original body/transform/source masks, three colliders, student and complete navigation source hash-identical. One approved masked correction and a bounded B-courtyard texture-only registration replace the rejected material-strip experiments. Dense 1,440,000-sample displacement/Jacobian checks pass; independent 21 road holdouts preserve three disclosed full-profile low correlations while frozen-clear-mask exclusion yields 21/21 and 0.3px maximum drift.
+- Nine existing leaf owners share final RGB without new leaf textures; original 798 alpha pixels, 17 outsideROI and nine footlines remain. Atomic preparation/fallback, repeated install, uninstall/resource release and cached detach/re-entry are tested. Fixed new texture mip budget 9,599,600 bytes, no new physics.
+- Local source 28/28 plus old 16/16, new lifecycle/physics 584/584, related original headless 3198 assertions, and native GPU 16/16 all pass. Default GPU changes zero exterior pixels; two-zoom full-nine sampling is within 1 LSB. Existing 113px full-scene diagnostic is retained and attributed to original nearest leaf versus linear background at the south collar plus 1 LSB roundoff, not silently threshold-relaxed.
+- Clean new asset import and 28 MB scoped PCK load pass. The PCK check caught shared CPU mip metadata mutation; validation now duplicates before clearing mips and verifies retention. Final actual desktop process RSS 485,486,592 bytes is whole-process, not component-only.
+- Continuous native movie 223 frames/11.15s walks 958.09 source px at unchanged speed 88, height18, zero off-route frames; 20 FPS fixed offline sampling is not a real-time benchmark. Actual manual motion, roof card, Escape, entry return and Changping re-entry passed, normal exit 0/no errors. Both default HD and isolated original Wenli checks are wired into existing Native CI. Full exact-head Native/Web CI remains a publication check; #137/#138 stay Draft/unmerged.
+
+
+## 2026-10-13 — Independent Chaoyang ambient squirrel, contact-shadow v2
+
+- Exact base: godot-version `f08bdc4ebbee5a5c112e35f93e1cee13ee5636f2`, tree `070f6fc4460550e7edaa7b3e15c5d2211fb41714`. Add only one true-RGBA eight-source-pixel squirrel on the existing 24px tree-adjacent paving segment. Four genuine run poses follow actual distance; idle/peek/tail and long varied rests stay visual-only. A small cached contact shadow is GPU-bounded to 4x1 source pixels plus one screen-pixel boundary coverage. Original PNG, map, shared student, navigation, collisions and story/save authority are unchanged.
+- The accepted v2 runtime files remain frozen. Existing code changes are three Chaoyang installation lines plus two entries in the existing isolated BUCT test runner. All original thirteen native/seven source registrations and save/evidence guards remain intact.
+- Exact-base local aggregate exits 0: 14 native scripts (2,354 assertions), 8 source groups (2,258 assertions), 11 save-isolation cases and 4 platform guards pass. This includes three-campus entry/return 1,234/0, squirrel 63/0, and unchanged road/student/building/lake/bridge-south behavior. Reuse of 73 matching source/import artifacts avoids a full import. The initial minimal-stage missing source JSONs were filled with 57 exact-base JSON blobs, then the complete aggregate reran cleanly.
+- Local focused entry coverage deliberately skips only its final Continue Story transition and phone_home assertion using the existing campus-only option. Full exact-published-head Native/Web CI remains required. Existing unshadowed 18.025s motion evidence and the separate accepted v2 contact-shadow comparisons are not replaced or conflated. Prepare an independent Draft; do not merge automatically or expand buildings/interiors/story work.
+
+## 2026-10-15 First-batch exported-campus integrity repair
+
+The full release PCK exposed a real packaging-only regression: north_large and north_west_upper rejected the remapped approved source texture because the original PNG bytes are absent from normal exports. The two newer owners silently fell back despite source-project tests passing.
+
+- Added a shared fail-closed verifier: exact resource identity/type/950x1656 dimensions; pinned raw PNG SHA256 whenever present; always authenticate a duplicated, decompressed, mip-cleared RGBA8 image against an independently verified pixel hash. Original image state, HD/mask/body hashes, ownership budgets and fallback behavior remain unchanged.
+- Both factories authenticate before the cached-owner fast path. Added 14 negative/source checks, including changed pixels, identity, dimensions and a process-local corrupt-PNG overlay; run against both source and the actual source-less PCK.
+- Added a bounded complete-PCK contract: all six active HD owners and independent dorm, road/path/real physical walking, chooser pointer navigation, object retirement, all three campuses and story resume. Combined builds strictly require the ambient squirrel. CI exports the complete pack and runs both tests with watchdogs and shell timeouts.
+- Recovered the same source from the persisted combined work branch after the cloud workspace reset. Fresh full import and affected native checks passed; fresh exact-head combined CI remains the merge gate. Earlier successful source graphics and recordings remain evidence for their recorded commit, not a claim of Windows hardware, hardware GPU performance or complete manual story playthrough.
+
+## 2026-10-18 — Native Chinese display revision, existing voices preserved
+
+- Applied 189 concrete Chinese rewrites from the supplied script: 172 verbatim and 17 minimal adaptations for current mechanics/readability. Four already-identical proposals remain unchanged; 20 conflicting or unaligned proposals are explicitly deferred. The complete 213-proposal ledger and old/new paths are in `godot_native/docs/CHINESE_TEXT_REVISION_20261018.md` and its machine-readable companion.
+- Native-only display overlay is applied automatically after every source sync. All 195 source fields and three Chapter 4 prologue fields assert their previous values. Historical React content, speaker identities, puzzle values/conditions, and independent samples are unchanged.
+- Existing English voice files, IDs, generated manifests, clip duration, event order and offsets are preserved. Both legacy and revised C3 subtitles resolve to the same original voice key. Forty-nine voiced Chinese rewrites have a separate original-English review list. No audio generation or paid service was used.
+- Unvoiced library/022 lines have sufficient reading time and retain continue/pause/skip. Fixed short presentation windows use concise Chinese; phone labels were checked for wrapping and bounds at 430×860, 390×844 and 1280×720.
+- Focused text, audio, narrative, library and phone checks pass. Full native regression is in progress; its first `test_additional_v4.gd` invocation lacked the baseline-required external QA directory, and the corrected isolated rerun passed 91 checks. Do not treat an in-progress aggregate or headless layout test as full visual/GPU acceptance.
+
+## 2026-10-19 — Original-story chapter handoff recovery
+
+- Stacked on PR150 without changing its Chinese overlay or existing English voices. Only Chapter3/State runtime changes: persist validated canteen escape and theater admission receipts, persist consumed theater greeting, and atomically save auditorium destination before teleport. No independent sample or campus integration.
+- Fresh four-chapter controller campaign passes 885 checks. Nine independent formal entry/Continue processes pass 125 checks through interrupted playback, saved continuation and completed compact touch re-entry; no DEV seeds. Twelve focused native scripts pass 6,008 checks, including save import/domain and narrative/camera/pose regressions. Headless host clocks are explicit; this is not a manual/visual/audio acceptance claim.
+- Updated three previous regression expectations that required ephemeral transitions or repeated greetings, retaining strict source pose, timing, facts and stale-capability checks. Original failing logs are preserved. Added the independent-process runner to existing native validation.
+- Web quick 4/4 and critical 24/24 pass. Release passes 32/35; offline single-file build terminates with 137 both in aggregate and one isolated retry, leaving its artifact/browser checks blocked. Full native aggregate and exact-head CI remain separate gates. Details: `godot_native/docs/CHAPTER_HANDOFF_CONTINUITY_20261019.md` and `CHAPTER_HANDOFF_VALIDATION_20261019.json`.
+## 2026-10-11 — Combined native animation review candidate
+
+- Combined exact reviewed heads #107, #108, #109/#110, #113 and #114 on `godot-version` `913bd512`, preserving stack ancestry once. Included the repaired #104 character-facing source port; the independent #106 side-chase remains outside this batch.
+- Fixed the actual arrival-frame cause of the blocked-wall tap regression without changing its assertion or collision/picking tolerances. Resolved Library scanner rejected/successful facing semantics and theater inspector idle versus accepted scan/nod ownership.
+- Added same-Main lifecycle coverage for queued drink cancellation, proof/stamp load settling, stale scanner callbacks and interrupted admission. Focused combined checks pass: facing 209, Library facing 20, lifecycle 35, admission 123, gate 204 and queue floor tap 97.
+- Complete aggregate/CI and real graphical review are tracked separately. Local web production compilation and 32 release checks passed; offline single-file build was resource-killed (137), so its dependent file/browser checks remain blocked locally. See `godot_native/docs/NATIVE_ANIMATION_INTEGRATION.md` for provenance, exact scope and honest evidence limits.
+
+## 2026-10-19 — Complete local native integration and handoff review
+
+- Integrated exact reviewed PR heads into `integration/godot-complete-20261019`, retaining the Web baseline and all 34 open-PR source dispositions. Added missing animation batches, long chase, independent kayak/rain objects, theater clues, and isolated prototype entry/return routes; archived experiments remain isolated. No remote push, PR closure, merge, or release was performed. Final fixes remain in the working tree after local merge commit `0592269fb2d72944eef8c5aadf72a612cf99ea0f`.
+- User confirmed current PR51 independent lake materials and legacy feeding compatibility. Repaired a proven old-save final-assembly dead end using explicit consumption receipts, without minting materials. Fixed stale swan rig calls, canceled-touch stroke, and rain presentation ownership/invalid-world handling.
+- Native latest evidence: 413 PASS stages / 374 GD stages, 726-script parse; initial full run and corrective/new focused evidence are separately retained. Current Web release: 36/36 PASS, including production/offline builds and browser smoke. Late C4 cross-process Continue and complete natural rain/swan Main handoffs passed.
+- Computer use opened Blender source and Godot editor/game; actual phone opening, folded preview movement/return, single-process save/restart/Continue and scaled portrait window were inspected. This does not assert full manual chapter parity or physical device acceptance. Final PCK passed 15 source-less adapter checks. See `godot_native/docs/FULL_INTEGRATION_20261019.md` and its archived JSON evidence.
+
+## 2026-10-19 — Production entry and frontend UI review
+
+- Removed production chapter/checkpoint access at the native UI, shortcuts, startup arguments and State entry methods; formal exports set `755_production` so an editor binary cannot reopen developer tools in a production PCK. Haidian building inspection is QA-only. Web production/offline builds now require Vite DEV for developer navigation; smoke fixtures use validated ordinary saves outside the product runtime.
+- Consulted Gemini Argon through the actual web UI with two real screenshots, then corrected the scope to frontend UI after the user's clarification. Reused existing native styling to distinguish the main story from three independent campus walks. No new story clock, chapter handoff action, phone shell or progression authority was introduced. See `godot_native/docs/UI_REVIEW_20261019.md`.
+- Web release 36/36 and targeted native source/layout checks pass. The earlier `551f1d3` baseline has all eight workflows and one uninterrupted 416-stage native PASS; the current patch requires its own full validation and rebuilt packages. One local attempt without GODOT_BIN was stopped for ENOENT and is invalid evidence; the correctly configured four-worker run is tracked separately.
+- Independent review caught an old QA session marker suppressing subsequent Web autosaves and exposing CC98 maintenance after the panel was removed. Production now clears only eight known temporary session keys. Thirteen real writer checks and four browser cases pass, including actual CC98 exit/save/reload with a stale session; the old artifact fails the new regression. The final Web release rerun passes 36/36.
+- The user authorized switching when ready. Computer use launched the updated isolated project through Godot Project Manager once, inspected the grouped entrance and resumed the existing saved interception retry screen. No new-game or retry action was invoked; the ordinary player profile remains untouched. The running editor binary uses production behavior and is not presented as a release executable.
+
+## 2026-10-20 — Godot chapter streaming and isolated server delivery
+
+- Replaced the browser startup monolith with a lossless first-chapter core plus 25 content-addressed chapter/campus packs (each at most 24,000,000 bytes). Final local candidate initial payload 93,541,854 B, core 53,693,300 B, total 580,124,840 B; all 2,656 original resources retain identical contents and exactly one owner. Source-input digest 9a33ef0d283f513dcb5eb279d8382166b7a8e67978af43d76be5cf2823bd8e7f identifies the tested dirty candidate; this is not a claim that those changes were already in a8eda584.
+- Runtime gates restore old saves, scene/media/audio transitions and recovered C4 replay until every required pack verifies and mounts. Main chapters prefetch serially after entry, independent campuses stay on demand, and saveData disables optional traffic. User Retry retains actual State/save bytes; accepted packs cache by SHA across immutable release paths. Loading and browser-hidden time share pause ownership without resuming manually paused audio.
+- Actual Chromium split acceptance: 285 checks across 1280x720, 1440x900 and touch 390x844; real C1 contacts/hold and C2 handoff, earned chapter imports, native persistence, real 3D chase rendering and OGV/hidden-tab lifecycle passed. Separate 107-check network-fault run proves opening input/save/reload with every deferred URL blocked, visible C2 Retry, unchanged waiting State/save, recovered keyboard map input, and C2 reload from real CacheStorage with zero C2 HTTP requests. These do not claim a complete manual campaign or physical-phone acceptance.
+- Focused native validation: 743-script parse plus 157 content/platform/visibility/focus assertions passed; transport VM 33 checks, official PCK mount/partition checks, and an actual failed-core negative control passed. Browser inspection caught eager World literal-load/preload and _init JSON dependencies omitted from the first plans; those failed attempts remain separate evidence and are not counted as passes. CI now requires split coverage, initial payload under 100 MB, boot assets and the existing actual browser gate.
+- Added manifest-verified server deployment, immutable release entry, isolated /7-55/ Nginx MIME/compression/cache/404 routes, atomic activation and verified rollback. Fourteen isolated mechanism cases and the actual split dry-run passed. Real 10.70.223.113 still accepts only SSH public keys and no usable local identity is available; no upload, Nginx change or server deployment has occurred. Existing root site is preserved.
+- Final v4 also refuses a core-only Web startup without its content host, including stale old-HTML/new-core combinations, and exposes an explicit Reload action without an automatic loop. Native fallback is retained. Firefox v3 earned C2/cache reload passed 16 checks; final v4 WebKit online startup/import/reload/movement passed 17 checks with no script/page errors. This WebKit test context discarded verified CacheStorage bodies across document reload; online re-fetch recovered correctly, and Safari offline caching remains unaccepted.
+
+- Follow-up packaging verification: first Linux Pages run 39371236507 correctly refused a 26,326,859 B q8 C4 OGV above the 24 MB pack budget; it did not publish. Added actual-size bounded q8→q4 fallback with 23.5 MB media ceiling, complete decoded-frame/size/FPS/duration/audio validation and atomic generated-file replacement. Real 43.833333-second/1052-frame source triggered q8→q7 under an isolated 20 MB cap; audio and impossible-budget preservation controls passed. Actual default conversion of both authored clips passed (q8 21,045,558 B and 3,514,284 B). build_web passes its Node binary explicitly and hashes the converter input; gameplay scripts are unchanged.
+- All three independent campuses separately passed 33 browser/visual assertions with only shared+selected packs, real movement and Escape return; no missing dependencies. Clean b0 re-export differs from accepted v4 only in UID-cache entry ordering: all 1175 UID→path mappings match, all other 2655 resources match, but core/PCK metadata bytes are explicitly not claimed identical. Actual target-server SSH remains publickey-refused with no upload. Final CI media encoding and online-byte acceptance remain separate from the pre-packaging browser summary.
+
+
+### 2026-10-20 分章加载发布验收：保留 CI 刷新失败并补采证据
+
+- `6956c253d1de59a1d513b387a77cd4889c15b7a0` 的 Pages run `39372748155`：Linux OGV 首段 q8 26,326,859 B 自动回退 q7 20,587,122 B；两个视频的完整帧、时长和音轨验证通过。Godot 导出、33 项 transport、7 项 lossless partition、实际 boot assets 与来源/100 MB 首载门槛均通过。
+- 发布被真实浏览器验收阻断：两种桌面尺寸通过，`touch-390` 在比较刷新前后 `{page, chapter, mode, flags}` 时失败。该旧报告没有保存 desired/actual 差异，不能仅从标签和最后 light 模式推定原因。发布步骤 skipped，原站仍保留 a8 已发布版本，没有将失败包上线。
+- 原 CI 报告与日志留在 `godot_native/exports/verification/ci_failure_6956_20261020/`（生成验收证据，不提交导出物）。相同 clean 6956 构建在独立本地 Chrome 三尺寸 basic 验收 163 项通过；4 倍 CPU 降速触摸临时诊断 97 项通过，原 1.6 秒等待不变，未复现失败。后者只读 IDBFS 在刷新前观察 primary=dark、backup=light，刷新后仍 dark；已有内存 saveDigest 不能独自证明浏览器磁盘耐久完成。
+- 本次只修改浏览器验收 harness 的证据记录：保存模式切换前后、真实点击矩形/坐标、保存及刷新时刻、刷新前 IDBFS 主备存档的模式/字段/哈希、desired/actual 差异。保持原严格恢复断言，不重写存档，不强制同步，不等待 IDB 匹配，不延长既有 sleep。只读数据库采样会增加少量观测开销，报告记录耗时，因此本轮不被描述为严格 1.6 秒内耐久保证。若 Linux 再次失败，应凭记录定位真实输入或持久化问题，不能通过放宽验收发布。
+- clean 6956 本地服务器候选的实际基础与媒体浏览器验收 118/118 通过（报告 SHA-256 `8c4134c858f7d76e089b609f8d3300cb143d2677a1caecf38f729ede48fcef51`）；39 文件部署 dry-run 通过，未向服务器上传。标准 SSH 身份仍缺失，服务器 `/7-55/` 仍 404；没有改动该服务器已有项目。
+
+
+### 2026-10-20 修复真实 Web 存档落盘完成边界（分章加载发布阻断）
+
+- `95f21403aeeac346b94bb862fb08aedc0fe0e5b9` 的 Pages run `39374160473` 再次在 touch reload 失败。新增记录现已确定：内存保存为 dark、digest `813df16f…59abdc`；刷新前只读 IDB 主档仍为旧 light、digest `bf6fa14c…d18109`，刷新后仍 light，差异只有 mode。桌面 1280 最新内存 `600c9dcd…ec2fe6` 与落盘 `35b19559…7ff320` 同样不一致，只因两份都为 dark 而通过旧状态比较。原失败证据保留，发布 skipped，原站 a8 未被替换。
+- 原因边界：Godot 4.7.2 的 FileAccess.close/flush 与非空内存摘要不是 IndexedDB 完成回执。官方 `JavaScriptBridge.force_fs_sync()` 只请求后续异步同步。未找到分包代码吞掉 dirty 的路径；不能把可能的单线程/磁盘调度延迟冒称已证根因。
+- 修复不改 State、控制器或存档内容。WebPlatform 观察既有原生 save.json 的摘要，显式保存仍调用原 State.save_game，随后使用官方同步请求；私有能力桥只读 `/userfs` 的 FILE_DATA，实际字节交回 Godot 做 SHA-256。只有当前 token 与本次文件 SHA 精确一致才确认；旧回执、旧字节、失败和 20 秒独立 watchdog 均不产生成功。无 WebCrypto 的 HTTP 也由 Godot 核验。未提交时提供 beforeunload 提醒，失败保留内存进度、可重试或导出；不保证强制终止浏览器能保存未提交写入。
+- 控制中心两处保存共用同一接口，成功/等待/失败落在保存按钮旁，pending 时禁重复点击；不借旧的排队剧情 toast 证明新保存成功。普通浏览器快照仍只有只读能力。
+- 验收变强：每次显式保存要求本次 token、真正“已保存”按钮、acknowledgedDigest 与当前原生摘要一致，再以独立只读 IDB 主档 SHA 复核；每次真实 reload 前也检查当前自动存档回执。原 page/chapter/mode/flags 严格比较保留。原 1.6 秒仅作为成功确认后的额外间隔，不再被误称为耐久完成证明。
+- 新聚焦测试：原生保存回执 20、真实运行时 inline JS 负控 39 全通过；负控覆盖延迟、数据库错误/永久挂起、超时后迟到结果、连续保存旧 ACK、非法内容/路径、无 WebCrypto、重试和 dispose。39 项已加入 Pages gate。原生 filtered validation 还重跑 content 69、platform 18、visibility 33、activity-focus 54，5 个阶段合计 194 项通过；不是完整原生 suite。
+- 已按 AGENTS 运行 sync_source（719 源资产），再导出新 dirty 证明包 `exports/web-streaming-save-20261020`：source-base 95f21403、source-input `d3f3efaf46ec0624db385d60a02bde2bfcc2a5803f0533b72bd05020c8e62576`，首载 93,547,670 B，总量 580,130,936 B，999 core/2,657 full entries、25 个后续包。已纳入与 CI 一致的额外 1,055 B 源 JSON，未删除内容来缩首包。
+- 真实触摸浏览器 99 项通过（报告 SHA `f3a3a06f879e6f3e8b68470eaa895fc5c488bc8d2b9d15e3670f8c287440b4b9`）：实际 Uint8Array→GDScript 哈希回执、按钮、独立 IDB 与重载全部一致，dark 保留。分章故障/缓存恢复 111 项通过（报告 SHA `9c678336fda6c34598e7730041d36e34b9990d91e338d3774028a20b6248b5eb`），只阻断明确的后续包，其余错误仍严格拒绝。
+- 新修复 dirty 包实际完整三尺寸回归 302/302 项通过（3 cases、0 errors），报告 SHA `320312296a969d3a950817009df8e8aa9f7bed8e29184b8d621caa666d2a6c9b`；三尺寸本次内存 digest、独立 IDB 主档 SHA 与真实 reload 后 digest 全部一致，模式均 dark、differences=[]。13 张截图逐张检查并清理留 SHA 收据。新证明追加到原 browser_summary 的 saveDurabilityFix，原 v3/v4 历史证据不被改写或冒作新修复证明。
+- 本轮正式源、测试与说明已可审查；服务器仍无有效 SSH 公钥身份，未上传、未安装 Nginx 配置。完整人工通关、物理手机、最低浏览器和听感仍不由以上自动化证明。
