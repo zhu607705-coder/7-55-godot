@@ -1530,7 +1530,11 @@ async function browserCase(id, width, height, touch, dpr = 1) {
     // sets. HTTP, hash and cache checks stay strict.
     await active.cdp.send('Page.enable'); await active.cdp.send('Runtime.enable'); await active.cdp.send('Network.enable', { maxTotalBufferSize: 1024 * 1024 * 1024, maxResourceBufferSize: 16 * 1024 * 1024 });
     const deferredFetchPatterns = [...delivery.deferredChunksByUrl.keys()].map(url => ({ urlPattern: url, requestStage: 'Response' }));
-    if (deferredFetchPatterns.length) await active.cdp.send('Fetch.enable', { patterns: deferredFetchPatterns });
+    // The streaming scenario intentionally blocks selected deferred requests
+    // through Network.setBlockedURLs. Leave that fault-injection path on its
+    // original Network response handling so the blocked/retry timing stays
+    // observable without an extra Fetch pause layer.
+    if (scenarios !== 'streaming' && deferredFetchPatterns.length) await active.cdp.send('Fetch.enable', { patterns: deferredFetchPatterns });
     await active.cdp.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: dpr, mobile: touch }); await active.cdp.send('Emulation.setTouchEmulationEnabled', { enabled: touch, maxTouchPoints: 5 });
     await active.cdp.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: active.downloadDir, eventsEnabled: true });
     if (scenarios === 'streaming') await prepareStreamingFault();
