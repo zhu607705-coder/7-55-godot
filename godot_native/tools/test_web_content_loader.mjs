@@ -30,8 +30,14 @@ const request = (host, ...ids) => host.request(JSON.stringify(ids));
 const retry = (host, ...ids) => host.retry(JSON.stringify(ids));
 const turn = () => new Promise(resolve => setImmediate(resolve));
 async function until(predicate, label) {
-  for (let index = 0; index < 500; index++) { if (predicate()) return; await turn(); }
-  throw new Error(`Timed out waiting for ${label}`);
+  // Chunked resume verifies several megabytes and IndexedDB callbacks. Keep
+  // the test bounded while allowing the slowest GitHub-hosted runner enough
+  // wall time for the same deterministic fixture.
+  const deadline = performance.now() + 30000;
+  while (!predicate()) {
+    if (performance.now() >= deadline) throw new Error(`Timed out waiting for ${label}`);
+    await new Promise(resolve => setTimeout(resolve, 1));
+  }
 }
 async function quiet() { for (let index = 0; index < 5; index++) await turn(); }
 function response(id, overrides = {}) { return new Response(body(id), { status: 200, ...overrides }); }
