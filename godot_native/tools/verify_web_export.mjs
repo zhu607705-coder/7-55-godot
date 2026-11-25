@@ -1435,7 +1435,7 @@ async function browserCase(id, width, height, touch, dpr = 1) {
   const temp = await mkdtemp(path.join(tmpdir(), '755-godot-web-browser-')); const profile = path.join(temp, 'profile'); const errors = []; const network = new Map(); const responses = new Map();
   const lifecycle = createBrowserLifecycle(temp); let stderr = '';
   const stderrPath = path.join(output, `${id}-browser-stderr.log`);
-  active = { id, width, height, touch, dpr, imports: [], screenshots: [], mediaObservations: [], requests: [], requestsById: new Map(), bootResponses: [], deferredResponses: [], bootBodyJobs: [], controlledBlockedUrls: new Set(), downloadDir: path.join(temp, 'downloads') };
+  active = { id, width, height, touch, dpr, imports: [], screenshots: [], mediaObservations: [], requests: [], requestsById: new Map(), bootResponses: [], deferredResponses: [], bootBodyJobs: [], fetchBodyJobs: [], deferredRowsByNetworkId: new Map(), deferredRowsByFetchId: new Map(), deferredRowsByUrl: new Map(), controlledBlockedUrls: new Set(), downloadDir: path.join(temp, 'downloads') };
   let result, primaryError;
   try {
     // Preserve stderr in full. Chromium helpers may inherit a pipe beyond the
@@ -1461,10 +1461,42 @@ async function browserCase(id, width, height, touch, dpr = 1) {
         const request = { requestId: params.requestId, url: params.request.url, at: Date.now(), range: params.request.headers.Range || params.request.headers.range || '', phase: active.faultPhase || '', controlled: active.controlledBlockedUrls.has(params.request.url) };
         active.requests.push(request); active.requestsById.set(params.requestId, request);
       }
-      if (method === 'Network.responseReceived') responses.set(params.requestId, { url: params.response.url, status: params.response.status, mimeType: params.response.mimeType, fromDiskCache: params.response.fromDiskCache || false, fromServiceWorker: params.response.fromServiceWorker || false });
+      if (method === 'Network.responseReceived') {
+        const response = { url: params.response.url, status: params.response.status, mimeType: params.response.mimeType, fromDiskCache: params.response.fromDiskCache || false, fromServiceWorker: params.response.fromServiceWorker || false };
+        responses.set(params.requestId, response);
+        const intercepted = active.deferredRowsByNetworkId.get(params.requestId);
+        if (intercepted) Object.assign(intercepted, response);
+      }
+      if (method === 'Fetch.requestPaused') {
+        const url = params.request.url;
+        const networkId = params.networkId || '';
+        const expected = delivery.deferredChunksByUrl.get(url);
+        if (!expected || !params.responseStatusCode) {
+          active.cdp.send('Fetch.continueRequest', { requestId: params.requestId }).catch(() => {});
+        } else {
+          const request = networkId ? active.requestsById.get(networkId) : active.requests.find(item => item.url === url);
+          const row = { url, status: params.responseStatusCode, mimeType: '', fromDiskCache: false, fromServiceWorker: false,
+            requestId: networkId || params.requestId, fetchRequestId: params.requestId, requestAt: request?.at ?? Date.now(),
+            range: request?.range ?? '', pending: true, intercepted: true };
+          active.deferredResponses.push(row);
+          active.deferredRowsByFetchId.set(params.requestId, row);
+          active.deferredRowsByUrl.set(url, row);
+          if (networkId) active.deferredRowsByNetworkId.set(networkId, row);
+          const job = active.cdp.send('Fetch.getResponseBody', { requestId: params.requestId }).then(result => {
+            const bytes = Buffer.from(result.body, result.base64Encoded ? 'base64' : 'utf8');
+            row.bytes = bytes.length; row.sha256 = hash(bytes);
+          }).catch(error => { row.error = error.message; }).finally(() => {
+            row.pending = false;
+            return active.cdp.send('Fetch.continueRequest', { requestId: params.requestId }).catch(error => { row.continueError = error.message; if (!row.error) row.error = error.message; });
+          });
+          active.fetchBodyJobs.push(job);
+        }
+      }
       if (method === 'Network.loadingFinished' && responses.has(params.requestId)) {
         const response = responses.get(params.requestId);
         network.set(response.url, { ...response, encodedDataLength: params.encodedDataLength });
+        const intercepted = active.deferredRowsByNetworkId.get(params.requestId) || active.deferredRowsByUrl.get(response.url);
+        if (intercepted) { intercepted.encodedDataLength = params.encodedDataLength; return; }
         if (delivery.bootByUrl.has(response.url) || delivery.deferredChunksByUrl.has(response.url)) {
           const request = active.requestsById.get(params.requestId);
           const row = { ...response, requestId: params.requestId, requestAt: request?.at ?? 0, range: request?.range ?? '', encodedDataLength: params.encodedDataLength, pending: true };
@@ -1490,7 +1522,10 @@ async function browserCase(id, width, height, touch, dpr = 1) {
     // real response bodies. High-DPI profiles can load the boot chunks and a
     // deferred chunk concurrently, so leave enough protocol buffer for both
     // sets. HTTP, hash and cache checks stay strict.
-    await active.cdp.send('Page.enable'); await active.cdp.send('Runtime.enable'); await active.cdp.send('Network.enable', { maxTotalBufferSize: 1024 * 1024 * 1024, maxResourceBufferSize: 16 * 1024 * 1024 }); await active.cdp.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: dpr, mobile: touch }); await active.cdp.send('Emulation.setTouchEmulationEnabled', { enabled: touch, maxTouchPoints: 5 });
+    await active.cdp.send('Page.enable'); await active.cdp.send('Runtime.enable'); await active.cdp.send('Network.enable', { maxTotalBufferSize: 1024 * 1024 * 1024, maxResourceBufferSize: 16 * 1024 * 1024 });
+    const deferredFetchPatterns = [...delivery.deferredChunksByUrl.keys()].map(url => ({ urlPattern: url, requestStage: 'Response' }));
+    if (deferredFetchPatterns.length) await active.cdp.send('Fetch.enable', { patterns: deferredFetchPatterns });
+    await active.cdp.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: dpr, mobile: touch }); await active.cdp.send('Emulation.setTouchEmulationEnabled', { enabled: touch, maxTouchPoints: 5 });
     await active.cdp.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: active.downloadDir, eventsEnabled: true });
     if (scenarios === 'streaming') await prepareStreamingFault();
     if (scenarios === 'boot-font-failure') {
@@ -1540,7 +1575,7 @@ async function browserCase(id, width, height, touch, dpr = 1) {
     if (scenarios === 'library') check(active.library?.completed === true, `${id}: requested Library continuity scenario completed`);
     const transportUrls = new Set(delivery.transport.map(asset => asset.url));
     const resources = [...network.values()].filter(record => transportUrls.has(record.url));
-    await Promise.all(active.bootBodyJobs);
+    await Promise.all([...active.bootBodyJobs, ...active.fetchBodyJobs]);
     for (const row of active.deferredResponses) {
       const expected = delivery.deferredChunksByUrl.get(row.url);
       check(expected && !row.pending && !row.error && row.status === 200 && !row.range && row.bytes === expected.bytes && row.sha256 === expected.sha256, `${id}: observed deferred chunk passes independent response-byte verification`, row);
@@ -1561,7 +1596,7 @@ async function browserCase(id, width, height, touch, dpr = 1) {
     const caseRecord = report.cases.at(-1);
     caseRecord.deferredChunkResponses = active.deferredResponses;
     caseRecord.saveAttempts = active.saveAttempts || [];
-    await finishBrowserCase({ lifecycle, caseRecord, primaryError, bootBodyJobs: active.bootBodyJobs, cdp: active.cdp, persistEvidence: async () => {
+    await finishBrowserCase({ lifecycle, caseRecord, primaryError, bootBodyJobs: [...active.bootBodyJobs, ...active.fetchBodyJobs], cdp: active.cdp, persistEvidence: async () => {
       if (existsSync(stderrPath)) {
         const bytes = await readFile(stderrPath);
         caseRecord.browserStderr = { file: stderrPath, bytes: bytes.length, sha256: hash(bytes) };
