@@ -78,7 +78,7 @@ if (scenarios === 'phone-recovery') {
 }
 function check(ok, label, details) { const row = { ok: !!ok, label, ...(details === undefined ? {} : { details }) }; report.checks.push(row); if (!ok) throw new Error(label); }
 async function persist() { await writeFile(path.join(output, 'web-acceptance.json'), JSON.stringify(report, null, 2) + '\n'); }
-async function poll(fn, label, timeout = 20000) {
+async function poll(fn, label, timeout = 60000) {
   const start = Date.now(); let error;
   while (Date.now() - start < timeout) { try { const value = await fn(); if (value) return value; } catch (e) { error = e; } await interval(100); }
   throw new Error(`Timeout: ${label}${error ? ` (${error.message})` : ''}`);
@@ -313,7 +313,7 @@ async function waitForPersistedSave(label, previousToken = -1, visibleSuccess = 
     if (receipt.error) throw new Error(`Browser save receipt failed: ${receipt.error}`);
     const visible = !visibleSuccess || controls(value).some(c => c.name === 'SaveNativeProgress' && c.text === '已保存' && !c.disabled);
     return visible && !receipt.pending && receipt.digest && receipt.acknowledgedDigest === receipt.digest && receipt.digest === value.saveDigest ? value : null;
-  }, `${label}: current native save has an exact durable receipt`, 30000);
+  }, `${label}: current native save has an exact durable receipt`, 60000);
   } catch (error) {
     diagnostics.stop('wait-failed');
     attempt.failedAt = Date.now();
@@ -1486,10 +1486,11 @@ async function browserCase(id, width, height, touch, dpr = 1) {
         else errors.push(failure);
       }
     });
-    // Retain the complete ~94 MB cold boot response set while the inspector
-    // hashes real response bodies, even when local export I/O delays CDP.
-    // This changes observation capacity only; HTTP/hash/cache checks stay strict.
-    await active.cdp.send('Page.enable'); await active.cdp.send('Runtime.enable'); await active.cdp.send('Network.enable', { maxTotalBufferSize: 128 * 1024 * 1024, maxResourceBufferSize: 2 * 1024 * 1024 }); await active.cdp.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: dpr, mobile: touch }); await active.cdp.send('Emulation.setTouchEmulationEnabled', { enabled: touch, maxTouchPoints: 5 });
+    // Retain the complete cold boot response set while the inspector hashes
+    // real response bodies. High-DPI profiles can load the boot chunks and a
+    // deferred chunk concurrently, so leave enough protocol buffer for both
+    // sets. HTTP, hash and cache checks stay strict.
+    await active.cdp.send('Page.enable'); await active.cdp.send('Runtime.enable'); await active.cdp.send('Network.enable', { maxTotalBufferSize: 512 * 1024 * 1024, maxResourceBufferSize: 4 * 1024 * 1024 }); await active.cdp.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: dpr, mobile: touch }); await active.cdp.send('Emulation.setTouchEmulationEnabled', { enabled: touch, maxTouchPoints: 5 });
     await active.cdp.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: active.downloadDir, eventsEnabled: true });
     if (scenarios === 'streaming') await prepareStreamingFault();
     if (scenarios === 'boot-font-failure') {

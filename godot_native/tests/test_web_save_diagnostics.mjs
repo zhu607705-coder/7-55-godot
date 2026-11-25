@@ -170,7 +170,7 @@ check('synchronous CDP send failure is also contained', () => assert.equal(throw
 for (const line of [
   "    if (receipt.error) throw new Error(`Browser save receipt failed: ${receipt.error}`);",
   "    return visible && !receipt.pending && receipt.digest && receipt.acknowledgedDigest === receipt.digest && receipt.digest === value.saveDigest ? value : null;",
-  "  }, `${label}: current native save has an exact durable receipt`, 30000);",
+  "  }, `${label}: current native save has an exact durable receipt`, 60000);",
   "  check(primary?.sha256 === saved.saveDigest, `${label}: independent readonly IndexedDB primary matches the current native save`, { elapsedMs: Date.now() - began, receipt: saved.savePersistence, primary, diskReadMs: disk.readDurationMs });"
 ]) {
   check(`original acceptance line is byte-preserved: ${line.trim().slice(0, 70)}`, () => assert(draft.includes(line)));
