@@ -96,7 +96,7 @@ Godot 4.7.2 的文件关闭回调和 `force_fs_sync()` 只是登记待同步，�
 
 2026-10-20，候选 `c1528f89` 的 Pages run `39411755479` 在保存 gate 失败：报告记录 173 项已完成检查、4 个已进入的视口用例；前三个用例完成精确保存与真实重载，第四个 `retina-1440`（CSS `1440×900`、DPR=2）等待当前保存回执超时。失败时当前 MEMFS 摘要为 `764fe4bb…`，只读回调观察的摘要仍为旧的 `42efec34…`，按钮显示“保存未完成·重试”。原报告没有失败时的独立 IDB 字节、mtime 或逐次 generation 记录，不能据此确定旧字节始终未提交、回执晚到或主线程调度的具体原因。该用例只走首次进入、设置与保存，没有触发本次 Journal 返回回调。Publish job 已跳过；记录时线上仍为已发布的 `a2517a6a`。
 
-随后新增的恢复能力在同一次 pending attempt 内，按真实 `Time.get_ticks_msec()` 每 500ms 再请求一次官方 `force_fs_sync()`，包含首次请求最多 40 次。续推不重新执行 `State.save_game()`，不直接写 IndexedDB，也不重置 token、摘要、`startedMs` 或原来的 JS 20 秒 watchdog。精确 ACK、超时、失败或 dispose 后停止续推；达到原期限或请求上限后也不再请求。只读 `syncRequests` 表示请求次数，`lastSyncMs` 表示最后请求时间，二者都不构成提交回执。已有 token 与实际字节 SHA-256 一致仍是唯一成功条件。
+随后新增的恢复能力在同一次 pending attempt 内，按真实 `Time.get_ticks_msec()` 每 500ms 再请求一次官方 `force_fs_sync()`，包含首次请求最多 40 次。续推不重新执行 `State.save_game()`，不直接写 IndexedDB，也不重置 token、摘要或 `startedMs`。浏览器回执观察保留 60 秒窗口，以覆盖高 DPI WebAssembly 与 IndexedDB 的慢速落盘。精确 ACK、超时、失败或 dispose 后停止续推；达到原期限或请求上限后也不再请求。只读 `syncRequests` 表示请求次数，`lastSyncMs` 表示最后请求时间，二者都不构成提交回执。已有 token 与实际字节 SHA-256 一致仍是唯一成功条件。
 
 正式 verifier 同时保留每次等待的回执历史；失败后补采独立只读 `failureDisk`，包括 `FILE_DATA` 字节摘要和 `timestampMs`，然后保留原失败。诊断不重试游戏保存、不延长产品 watchdog、不改变精确 ACK 或重载断言。
 

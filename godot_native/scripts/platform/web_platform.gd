@@ -109,14 +109,14 @@ func setup(owner_shell: Control, owner_state: Node) -> void:
 			},
 			watchSave: (token, absolutePath, receive) => {
 				cancelSaveWatch(); saveUncommitted = true;
-				const watch = { token, timer: null, timeout: null, deadline: Date.now() + 20000 };
+				const watch = { token, timer: null, timeout: null, deadline: Date.now() + 60000 };
 				saveWatch = watch;
 				const current = () => saveWatch === watch;
 				const fail = code => {
 					if (!current()) return;
 					cancelSaveWatch(); receive(token, null, code);
 				};
-				watch.timeout = setTimeout(() => fail('timeout'), 20000);
+				watch.timeout = setTimeout(() => fail('timeout'), 60000);
 				if (!/^\\/userfs\\/(?:[^/]+\\/)*save\\.json$/.test(absolutePath) || absolutePath.split('/').includes('..')) { fail('invalid_path'); return; }
 				if (typeof indexedDB === 'undefined') { fail('unavailable'); return; }
 				async function read() {
