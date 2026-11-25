@@ -1490,7 +1490,7 @@ async function browserCase(id, width, height, touch, dpr = 1) {
     // real response bodies. High-DPI profiles can load the boot chunks and a
     // deferred chunk concurrently, so leave enough protocol buffer for both
     // sets. HTTP, hash and cache checks stay strict.
-    await active.cdp.send('Page.enable'); await active.cdp.send('Runtime.enable'); await active.cdp.send('Network.enable', { maxTotalBufferSize: 512 * 1024 * 1024, maxResourceBufferSize: 4 * 1024 * 1024 }); await active.cdp.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: dpr, mobile: touch }); await active.cdp.send('Emulation.setTouchEmulationEnabled', { enabled: touch, maxTouchPoints: 5 });
+    await active.cdp.send('Page.enable'); await active.cdp.send('Runtime.enable'); await active.cdp.send('Network.enable', { maxTotalBufferSize: 1024 * 1024 * 1024, maxResourceBufferSize: 16 * 1024 * 1024 }); await active.cdp.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: dpr, mobile: touch }); await active.cdp.send('Emulation.setTouchEmulationEnabled', { enabled: touch, maxTouchPoints: 5 });
     await active.cdp.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: active.downloadDir, eventsEnabled: true });
     if (scenarios === 'streaming') await prepareStreamingFault();
     if (scenarios === 'boot-font-failure') {
