@@ -1487,7 +1487,13 @@ async function browserCase(id, width, height, touch, dpr = 1) {
             row.bytes = bytes.length; row.sha256 = hash(bytes);
           }).catch(error => { row.error = error.message; }).finally(() => {
             row.pending = false;
-            return active.cdp.send('Fetch.continueRequest', { requestId: params.requestId }).catch(error => { row.continueError = error.message; if (!row.error) row.error = error.message; });
+            return active.cdp.send('Fetch.continueRequest', { requestId: params.requestId }).catch(error => {
+              row.continueError = error.message;
+              // Chromium can release a paused response immediately after its
+              // body has been read. The body hash remains authoritative when
+              // the release reports an already-invalid interception id.
+              if (row.bytes === undefined || row.sha256 === undefined) row.error ||= error.message;
+            });
           });
           active.fetchBodyJobs.push(job);
         }
