@@ -1435,7 +1435,7 @@ async function browserCase(id, width, height, touch, dpr = 1) {
   const temp = await mkdtemp(path.join(tmpdir(), '755-godot-web-browser-')); const profile = path.join(temp, 'profile'); const errors = []; const network = new Map(); const responses = new Map();
   const lifecycle = createBrowserLifecycle(temp); let stderr = '';
   const stderrPath = path.join(output, `${id}-browser-stderr.log`);
-  active = { id, width, height, touch, dpr, imports: [], screenshots: [], mediaObservations: [], requests: [], requestsById: new Map(), bootResponses: [], deferredResponses: [], bootBodyJobs: [], fetchBodyJobs: [], deferredRowsByNetworkId: new Map(), deferredRowsByFetchId: new Map(), deferredRowsByUrl: new Map(), controlledBlockedUrls: new Set(), downloadDir: path.join(temp, 'downloads') };
+  active = { id, width, height, touch, dpr, imports: [], screenshots: [], mediaObservations: [], requests: [], requestsById: new Map(), bootResponses: [], deferredResponses: [], bootBodyJobs: [], fetchBodyJobs: [], fetchBodyTail: Promise.resolve(), deferredRowsByNetworkId: new Map(), deferredRowsByFetchId: new Map(), deferredRowsByUrl: new Map(), controlledBlockedUrls: new Set(), downloadDir: path.join(temp, 'downloads') };
   let result, primaryError;
   try {
     // Preserve stderr in full. Chromium helpers may inherit a pipe beyond the
@@ -1482,7 +1482,7 @@ async function browserCase(id, width, height, touch, dpr = 1) {
           active.deferredRowsByFetchId.set(params.requestId, row);
           active.deferredRowsByUrl.set(url, row);
           if (networkId) active.deferredRowsByNetworkId.set(networkId, row);
-          const job = active.cdp.send('Fetch.getResponseBody', { requestId: params.requestId }).then(result => {
+          const job = active.fetchBodyTail.then(() => active.cdp.send('Fetch.getResponseBody', { requestId: params.requestId }, 60000).then(result => {
             const bytes = Buffer.from(result.body, result.base64Encoded ? 'base64' : 'utf8');
             row.bytes = bytes.length; row.sha256 = hash(bytes);
           }).catch(error => { row.error = error.message; }).finally(() => {
@@ -1494,7 +1494,8 @@ async function browserCase(id, width, height, touch, dpr = 1) {
               // the release reports an already-invalid interception id.
               if (row.bytes === undefined || row.sha256 === undefined) row.error ||= error.message;
             });
-          });
+          }));
+          active.fetchBodyTail = job.catch(() => {});
           active.fetchBodyJobs.push(job);
         }
       }
