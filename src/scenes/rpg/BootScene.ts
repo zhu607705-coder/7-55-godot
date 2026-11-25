@@ -12,6 +12,7 @@ import { drawZijingangWorld, ZIJINGANG_WORLD } from "./ZijingangWorld";
 import { CampusBuildingLayer } from "./CampusBuildings";
 import { CampusWaterLayer } from "./CampusWaterLayer";
 import { CampusPathGrid, type CampusPathPoint } from "./CampusPathfinder";
+import { ZIJINGANG_CAMPUS_LANDMARKS } from "./ZijingangCampusLayout";
 import { RpgMovementController } from "./RpgMovementController";
 import { RpgCameraController } from "./RpgCameraController";
 import {
@@ -54,6 +55,9 @@ const FOOTPRINT_SPACING = 42;
 const FOOTPRINT_MESSY_RATIO = 0.82;
 const PATH_DOT_RADIUS = 6;
 const PATH_ENDPOINT_RADIUS = 14;
+const CRESCENT_BUILDING = ZIJINGANG_CAMPUS_LANDMARKS.crescent_building;
+const CRESCENT_LOCKED_MARGIN = { x: 40, y: 48 };
+const CRESCENT_UNAVAILABLE_TEXT = "此路不通，月牙楼暂未对你开放。";
 
 type GateVisual = {
   marker: Phaser.GameObjects.Arc;
@@ -118,7 +122,9 @@ export class BootScene extends Phaser.Scene {
 
     this.buildingLayer = new CampusBuildingLayer(this, ZIJINGANG_CAMPUS_PLATE_KEY);
     const buildingOverlays = this.buildingLayer.build();
-    this.pathGrid = new CampusPathGrid(campusRuntimeData.walkability, 24);
+    // The source mask is authored at 4px. A 16px navigation sample keeps the
+    // narrow campus footpaths connected while still matching the player foot box.
+    this.pathGrid = new CampusPathGrid(campusRuntimeData.walkability, 16);
     ensureRpgPlayerTextures(this);
     const state = this.bridge.getState();
     const spawn = this.resolveSpawn(state);
@@ -641,6 +647,11 @@ export class BootScene extends Phaser.Scene {
 
   private handleWorldTap(worldX: number, worldY: number): void {
     if (!this.bridge.getState().actOne.movementEnabled) return;
+    if (this.isCrescentBuildingLocked(worldX, worldY)) {
+      this.showUnreachableMarker(worldX, worldY);
+      this.bridge.emit("rpg_subtitle", { text: CRESCENT_UNAVAILABLE_TEXT, tone: "system", durationMs: 3200 });
+      return;
+    }
     const body = this.player.body as Phaser.Physics.Arcade.Body | null;
     const footOffsetY = body ? body.center.y - this.player.y : 0;
     const path = this.pathGrid.findPath(
@@ -654,6 +665,13 @@ export class BootScene extends Phaser.Scene {
     this.movement.setPath(path.map((point) => ({ x: point.x, y: point.y - footOffsetY })));
     this.currentPathLength = path.length;
     this.showPathIndicator(path);
+  }
+
+  private isCrescentBuildingLocked(worldX: number, worldY: number): boolean {
+    const center = CRESCENT_BUILDING.worldCenter;
+    const footprint = CRESCENT_BUILDING.visualFootprint;
+    return Math.abs(worldX - center.x) <= footprint.width / 2 + CRESCENT_LOCKED_MARGIN.x
+      && Math.abs(worldY - center.y) <= footprint.height / 2 + CRESCENT_LOCKED_MARGIN.y;
   }
 
   private showPathIndicator(path: CampusPathPoint[]): void {

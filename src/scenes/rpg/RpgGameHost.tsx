@@ -130,6 +130,7 @@ import { QuestTaskBar } from "../../components/QuestClueStrip";
 import { RpgSubtitleLayer } from "../../components/RpgSubtitleLayer";
 import { QizhenJournalCamera, type QizhenJournalCameraSession } from "../../components/QizhenJournalCamera";
 import { useMediaQuery } from "../../components/useMediaQuery";
+import { detectClientDeviceKind } from "../../core/ClientCompatibility";
 import {
   CHAPTER_FOUR_755_SCENE_KEY,
   revalidateChapterFour755SpatialAttestation,
@@ -1013,8 +1014,8 @@ const [chapter4MaintenanceDiagnosisFeedback, setChapter4MaintenanceDiagnosisFeed
     }
   }, [inspectedMapItem, state.items]);
   const coarsePointer = useMediaQuery(RPG_TOUCH_CONTROLS_QUERY);
-  const touchControls = coarsePointer
-    || (typeof navigator !== "undefined" && navigator.maxTouchPoints > 0);
+  const touchControls = detectClientDeviceKind() !== "desktop" && (coarsePointer
+    || (typeof navigator !== "undefined" && navigator.maxTouchPoints > 0));
   const bindShellRef = useCallback((node: HTMLElement | null) => {
     shellRef.current = node;
     setShellRoot((current) => current === node ? current : node);

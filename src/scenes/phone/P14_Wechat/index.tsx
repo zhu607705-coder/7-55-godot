@@ -772,12 +772,12 @@ export function WechatScene({ state, router, events }: SceneComponentProps) {
           {stage !== "not_started" ? (
             <article className="tiyi-update-card" aria-label="体艺下载卡">
               <h2>浙大体艺 APP</h2>
-              <small>游戏内更新</small>
-              <p>仅模拟扫码、获取和安装。<br />不调用设备权限，不下载真实应用。</p>
+              <small>官方更新包</small>
+              <p>通过公众号获取官方更新包，安装后即可使用。</p>
               {stage === "official_entry_found" ? (
                 <><button type="button" onClick={() => {
                   if (!kit.actOne.acquireTiyiUpdate()) kit.flags.toast("需要联网才能获取更新包。");
-                }}>模拟扫码获取更新</button><small>需要网络连接</small></>
+                }}>扫码获取更新</button><small>需要网络连接</small></>
               ) : stage === "package_ready" ? (
                 <><p>更新包已就绪</p><button type="button" onClick={() => kit.actOne.installTiyiUpdate()}>安装更新</button></>
               ) : (

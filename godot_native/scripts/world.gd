@@ -1,5 +1,6 @@
 extends Control
 const CampusMaterial = preload("res://scripts/ui/campus_ui_material.gd")
+const DeviceProfile=preload("res://scripts/device_profile.gd")
 const CompactOverlay = preload("res://scripts/ui/compact_overlay_layout.gd")
 const OverflowText=preload("res://scripts/ui/overflow_text.gd")
 var overflow_feedback:ScrollContainer
@@ -15,6 +16,7 @@ const CampusWayfinding = preload("res://scripts/ui/campus_wayfinding.gd")
 const LibraryEntranceDoor = preload("res://scripts/presentation/library_entrance_door.gd")
 const DirectWorldGestures=preload("res://scripts/direct_world_gestures.gd")
 const TargetApproach=preload("res://scripts/target_approach.gd")
+const CampusMaskRoute=preload("res://scripts/campus_mask_route.gd")
 const SourceTiledTexture=preload("res://scripts/presentation/source_tiled_texture.gd")
 # This chapter-owned script and its setup textures are loaded only after the
 # incoming scene's WebContent pack is ready. An inactive canteen is retained
@@ -56,6 +58,7 @@ var _floor_world_key := ""
 var _floor_pending_interaction:Dictionary={}
 var _floor_intent_state:Dictionary={}
 var _floor_planner := MobileFloorRoute.new()
+var _campus_mask_planner := CampusMaskRoute.new()
 var _canteen_floor_tap := CanteenFloorTap.new()
 var nearby: Dictionary = {}
 var walk_clock := 0.0
@@ -78,6 +81,11 @@ var _manual_sent := false
 var _last_floor := ""
 var _input_kind := "keyboard"
 var touch_axis := Vector2.ZERO
+var touch_stick:Control
+var stick_pointer:=-1
+var stick_origin:=Vector2.ZERO
+var stick_context:Array=[]
+var stick_owner:Dictionary={}
 var kayak: RefCounted
 var safe_player := Vector2.ZERO
 var foreground: Array = []
@@ -141,7 +149,8 @@ var object_picker: RefCounted=ObjectPicker.new()
 
 func _ready() -> void:
 	clip_contents = true
-	touch_controls = DisplayServer.is_touchscreen_available()
+	touch_controls = DeviceProfile.uses_touch_controls()
+	touch_stick=preload("res://scripts/ui/world_touch_stick.gd").new();add_child(touch_stick)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	focus_mode = Control.FOCUS_ALL
 	worlds = JSON.parse_string(FileAccess.get_file_as_string("res://data/worlds.json")).worlds
@@ -492,7 +501,7 @@ func _try_interact(target: Dictionary = {}) -> void:
 	if presentation_actor_hidden or _interaction_presentation_blocks() or _shell_input_blocked(): return
 	if target.is_empty(): target = nearby
 	if target.is_empty():
-		subtitle = "靠近后点一下物件。" if mobile_exploration else "靠近可交互的物品后按空格。"; subtitle_left = 2.4; return
+		subtitle = "点一下场景中的物件。" if mobile_exploration else "点一下物件，或靠近后按空格。"; subtitle_left = 2.4; return
 	if scene_id=="library_interior" and library_layers!=null and library_layers.backpack_eviction_active() and str(target.get("action","")) in ["lib_sit","lib_dialogue_open"]: return
 	var distance := _distance(target)
 	var limit := float(target.get("radius",100)) * (.5 if scene_id == "dorm_hub" else 1.0)
@@ -561,6 +570,7 @@ func _process(delta: float) -> void:
 		return
 	delta=minf(delta,.05)
 	if _inventory_owns_pointer(): cancel_exploration_gestures()
+	if stick_pointer>=0 and not _touch_stick_valid():_cancel_touch_stick()
 	if not kayak_mouse_gesture.is_empty() and not _kayak_mouse_valid(): kayak_mouse_gesture.clear()
 	if _floor_feedback_left>0:
 		_floor_feedback_left=maxf(0,_floor_feedback_left-delta)
@@ -867,6 +877,7 @@ func _pick_target(point: Vector2, inventory_drop: bool=false) -> Dictionary:
 func _render_context() -> Dictionary:
 	return {"origin":size/2-camera*zoom,"zoom":zoom,"player":player,"scene_id":scene_id,"floor":_last_floor,"nearby_id":str(nearby.get("id","")),"background":background,"mode_mix":mode_mix}
 func _draw() -> void:
+	if is_instance_valid(touch_stick):touch_stick.sync(touch_stick_rect(),touch_axis)
 	if mobile_exploration:mobile_control_metrics()
 	if is_instance_valid(kayak_visual):kayak_visual.sync()
 	if is_instance_valid(native_dorm):
@@ -1176,6 +1187,7 @@ func _gui_input(event: InputEvent) -> void:
 	if is_instance_valid(native_dorm):native_dorm.observe_input(event)
 	if capture_mode or _scene_presentation_blocks() or _shell_input_blocked(): return
 	if is_instance_valid(host_node) and is_instance_valid(host_node.get("world_effect")) and host_node.world_effect.get_meta("blocks_input",false): return
+	if _touch_stick_input(event):accept_event();return
 	if _kayak_mouse_input(event): accept_event(); return
 	if (mobile_exploration or touch_controls or event is InputEventScreenTouch or event is InputEventScreenDrag) and _mobile_exploration_input(event): return
 	if event is InputEventMouseMotion and (event.button_mask & MOUSE_BUTTON_MASK_RIGHT or event.button_mask & MOUSE_BUTTON_MASK_MIDDLE):
@@ -1443,6 +1455,7 @@ func _notification(what: int) -> void:
 
 func cancel_exploration_gestures() -> void:
 	_cancel_table_drag()
+	_cancel_touch_stick()
 	touch_axis=Vector2.ZERO;move_target=Vector2.INF
 	mobile_confirmed_target_id="";mobile_confirmed_world_key=""
 	if direct_gestures!=null:direct_gestures.cancel()
@@ -1514,6 +1527,8 @@ func handle_root_kayak_pointer(event: InputEvent) -> bool:
 
 func mobile_control_metrics() -> Dictionary:
 	var metrics:Dictionary={"scheme":"direct_world","gestureArea":exploration_safe_rect(true),"mode":hud_mode_rect(),"paddles":kayak_paddle_rects()}
+	var stick:Rect2=touch_stick_rect()
+	if stick.has_area():metrics.stick=stick
 	if mobile_exploration and is_visible_in_tree():
 		mobile_control_observation={"frame":Engine.get_process_frames(),"world_key":world_key,"size":size,"display_scale":hud_display_scale(),"metrics":metrics}
 	return metrics
@@ -1534,6 +1549,9 @@ func _mobile_local_from_root(point: Vector2) -> Vector2:
 func handle_root_exploration_pointer(event: InputEvent) -> bool:
 	# GUI owns acquisition. Capture only an existing scene pointer; inventory,
 	# native furniture dragging and modal presses retain their original owner.
+	if (event is InputEventScreenTouch or event is InputEventScreenDrag) and event.index==stick_pointer:
+		var stick_event:InputEvent=event.duplicate();stick_event.position=_mobile_local_from_root(event.position)
+		return _touch_stick_input(stick_event)
 	var id:int=-999
 	if event is InputEventScreenTouch or event is InputEventScreenDrag:
 		if event is InputEventScreenTouch and event.pressed:return false
@@ -1553,6 +1571,43 @@ func handle_root_exploration_pointer(event: InputEvent) -> bool:
 	_mobile_exploration_input(copy)
 	return true
 
+func touch_stick_rect()->Rect2:
+	if not touch_controls or kayak!=null or capture_mode or scene_id.is_empty() or not is_visible_in_tree() or _interaction_presentation_blocks() or _shell_input_blocked():return Rect2()
+	if scene_id=="dorm_hub" and not State.d.actOne.get("controlsInstalled",false):return Rect2()
+	if is_instance_valid(host_node) and (not host_node.world_frame.is_visible_in_tree() or (is_instance_valid(host_node.get("world_effect")) and host_node.world_effect.get_meta("blocks_input",false))):return Rect2()
+	var display:float=hud_display_scale()
+	var safe:Rect2=exploration_safe_rect(true)
+	var diameter:float=minf(100/display,minf(safe.size.y*.45,safe.size.x*.3))
+	var margin:float=minf(16/display,safe.size.y*.05)
+	return Rect2(safe.position.x+margin,safe.end.y-diameter-margin,diameter,diameter)
+
+func _touch_stick_context()->Array:
+	# Following the moving actor changes the camera, never the finger's owner.
+	return [world_key,size,_floor_phase_context(),host_node.world_view.get_global_rect() if is_instance_valid(host_node) else get_global_rect()]
+
+func _touch_stick_valid()->bool:
+	return is_same(stick_owner,State.d) and stick_context==_touch_stick_context() and touch_stick_rect().has_area() and not _inventory_owns_pointer()
+
+func _cancel_touch_stick()->void:
+	stick_pointer=-1;stick_context=[];stick_owner={};touch_axis=Vector2.ZERO
+	if is_instance_valid(touch_stick):touch_stick.axis=Vector2.ZERO;touch_stick.queue_redraw()
+
+func _touch_stick_input(event:InputEvent)->bool:
+	if not (event is InputEventScreenTouch or event is InputEventScreenDrag):return false
+	if stick_pointer>=0 and event.index==stick_pointer:
+		if not _touch_stick_valid() or (event is InputEventScreenTouch and not event.pressed):_cancel_touch_stick();return true
+		var radius:float=touch_stick_rect().size.x*.5
+		var offset:Vector2=event.position-stick_origin
+		touch_axis=Vector2.ZERO if offset.length()<radius*.16 else (offset/(radius*.57)).limit_length()
+		queue_redraw();return true
+	if event is InputEventScreenTouch and event.pressed and stick_pointer<0:
+		var rect:Rect2=touch_stick_rect()
+		if not rect.has_area() or not rect.has_point(event.position):return false
+		_cancel_floor_route();move_target=Vector2.INF;grab_focus()
+		stick_pointer=event.index;stick_origin=rect.get_center();stick_context=_touch_stick_context();stick_owner=State.d
+		return _touch_stick_input(event)
+	return false
+
 func _begin_direct_pointer(id:int,point:Vector2,role:String)->void:
 	var duplicate:bool=direct_gestures.pointers.has(id)
 	_direct_gesture_action(direct_gestures.begin(id,point,role,_direct_gesture_context(),State.d))
@@ -1567,7 +1622,10 @@ func _end_direct_pointer(id:int,point:Vector2,canceled:bool)->void:
 	_direct_gesture_action(direct_gestures.end(id,point,canceled or not Rect2(Vector2.ZERO,size).has_point(point),_direct_gesture_context(),State.d))
 
 func _direct_gesture_context()->Array:
-	return [world_key,str(State.d.get("runtimeMode","")),str(State.d.get("native",{}).get("scene","")),size,camera,zoom,host_node.world_view.get_global_rect() if is_instance_valid(host_node) else get_global_rect()]
+	# A second finger may tap a prop while the stick follows the actor. Release
+	# still re-picks the same visible target and validates current proximity.
+	var camera_context:Variant=camera if stick_pointer<0 else [stick_pointer,stick_origin]
+	return [world_key,str(State.d.get("runtimeMode","")),str(State.d.get("native",{}).get("scene","")),size,camera_context,zoom,host_node.world_view.get_global_rect() if is_instance_valid(host_node) else get_global_rect()]
 
 func _direct_touch_role(local:Vector2)->String:
 	if hud_mode_rect().has_point(local):return "mode"
@@ -1633,7 +1691,7 @@ func _mobile_exploration_input(event: InputEvent) -> bool:
 	if event is InputEventMouseMotion and direct_gestures.pointers.has(-999):
 		_direct_gesture_action(direct_gestures.drag(-999,event.position,_direct_gesture_context(),State.d));accept_event();return true
 	if event is InputEventScreenTouch:
-		touch_controls=true;_input_kind="touch"
+		_input_kind="touch"
 		if event.pressed:
 			_cancel_floor_route();grab_focus()
 			_begin_direct_pointer(event.index,event.position,_direct_touch_role(event.position))
@@ -1678,6 +1736,29 @@ func _floor_obstacles() -> Array:
 
 func _floor_stand(point: Vector2) -> bool:
 	return _floor_bounds.has_point(point) and can_stand(point)
+
+func _campus_locked_landmark_message(point: Vector2) -> String:
+	if scene_id != "campus_bootstrap": return ""
+	var constants: Dictionary = spec.get("landmarkConstants", {})
+	var landmarks: Dictionary = constants.get("ZIJINGANG_CAMPUS_LANDMARKS", {})
+	var landmark: Dictionary = landmarks.get("crescent_building", {})
+	var center: Dictionary = landmark.get("worldCenter", {})
+	var footprint: Dictionary = landmark.get("visualFootprint", {})
+	if center.is_empty() or footprint.is_empty(): return ""
+	var center_x := float(center.get("x", NAN))
+	var center_y := float(center.get("y", NAN))
+	var width := float(footprint.get("width", NAN))
+	var height := float(footprint.get("height", NAN))
+	if not is_finite(center_x) or not is_finite(center_y) or not is_finite(width) or not is_finite(height): return ""
+	if absf(point.x-center_x) <= width*.5+40.0 and absf(point.y-center_y) <= height*.5+48.0:
+		return "此路不通，月牙楼暂未对你开放。"
+	return ""
+
+func _plan_floor_route(start: Vector2, goal: Vector2, obstacles: Array) -> Array[Vector2]:
+	var route: Array[Vector2]=_floor_planner.plan(start,goal,obstacles,_floor_bounds,_floor_stand,func(a: Vector2,b: Vector2):return _floor_segment_clear(a,b,obstacles,true))
+	if route.is_empty() and scene_id=="campus_bootstrap" and not mask.is_empty():
+		route=_campus_mask_planner.plan(start,goal,world_size,PlayerMetrics.FOOT_CENTER_OFFSET,_floor_stand,func(a: Vector2,b: Vector2):return _floor_segment_clear(a,b,obstacles,true))
+	return route
 
 func _floor_segment_clear(a: Vector2,b: Vector2,planned_obstacles: Array=[],validated_nodes: bool=false) -> bool:
 	# Planning is synchronous and has already checked each graph node. Walking
@@ -1732,11 +1813,23 @@ func _floor_phase_context()->Array:
 	var lake:Dictionary=State.d.get("qizhenLake",{});var chapter:Dictionary=State.d.get("chapter4",{})
 	return [str(State.d.get("runtimeMode","")),str(n.get("scene","")),str(n.get("mode","")),str(n.get("selected_item","")),str(State.d.get("actOne",{}).get("phase","")),str(ui.get("libraryFinalsPhase","")),str(State.d.get("canteenHunt",{}).get("phase","")),str(State.d.get("theaterHunt",{}).get("phase","")),str(lake.get("phase","")),str(lake.get("zone","")),str(lake.get("vehicle","")),str(chapter.get("phase","")),str(chapter.get("floor","")),str(chapter.get("timeState",""))]
 
+func _target_intent_signature(target: Dictionary)->Dictionary:
+	# Labels and art can be refreshed while the actor is walking. Keep only the
+	# fields that affect the eventual controller dispatch or physical range.
+	var signature:Dictionary={}
+	for key:String in ["id","action","position","x","y","bounds","stand","radius","proximity","mode","requiredMode","item","item_hint","acceptedItems","value","follow_player","kind"]:
+		if not target.has(key):continue
+		var value:Variant=target[key]
+		signature[key]=value.duplicate(true) if value is Array or value is Dictionary else value
+	return signature
+
 func _floor_intent_valid()->bool:
 	if _floor_pending_interaction.is_empty() or not is_same(_floor_intent_state,State.d) or _floor_pending_interaction.world_key!=world_key or _floor_pending_interaction.phase!=_floor_phase_context():return false
 	if _interaction_presentation_blocks() or _shell_input_blocked() or not is_visible_in_tree():return false
 	for target:Dictionary in targets:
-		if str(target.get("id",""))==str(_floor_pending_interaction.target.get("id","")):return target==_floor_pending_interaction.target
+		if str(target.get("id",""))!=str(_floor_pending_interaction.target.get("id","")):continue
+		var expected:Dictionary=_floor_pending_interaction.get("signature",_target_intent_signature(_floor_pending_interaction.target))
+		return _target_intent_signature(target)==expected
 	return false
 
 func _queue_target_approach(target:Dictionary)->bool:
@@ -1759,12 +1852,12 @@ func _queue_target_approach(target:Dictionary)->bool:
 	for goal:Vector2 in TargetApproach.candidates(player,area,limit,offset,authored):
 		if not _floor_stand(goal) or _distance_at(target,goal)>limit:continue
 		attempts+=1
-		var route:Array[Vector2]=_floor_planner.plan(player,goal,obstacles,_floor_bounds,_floor_stand,func(a:Vector2,b:Vector2):return _floor_segment_clear(a,b,obstacles,true))
+		var route:Array[Vector2]=_plan_floor_route(player,goal,obstacles)
 		if not route.is_empty():
 			_floor_route=route;_floor_goal=goal+PlayerMetrics.FOOT_CENTER_OFFSET;_floor_status="moving"
 			_floor_world_key=world_key;_floor_view_size=size;_floor_view_zoom=zoom;_floor_expected_camera=camera
 			_floor_intent_state=State.d
-			_floor_pending_interaction={"target":target.duplicate(true),"world_key":world_key,"phase":_floor_phase_context()}
+			_floor_pending_interaction={"target":target.duplicate(true),"signature":_target_intent_signature(target),"world_key":world_key,"phase":_floor_phase_context()}
 			grab_focus();queue_redraw();return true
 		if attempts>=TargetApproach.MAX_PLANS:break
 	return false
@@ -1785,6 +1878,10 @@ func _mobile_floor_tap(local: Vector2) -> void:
 	var visible:=exploration_safe_rect(true)
 	if not visible.has_point(local): return
 	var point: Vector2=(local-size/2)/zoom+camera
+	var locked_notice := _campus_locked_landmark_message(point)
+	if not locked_notice.is_empty():
+		State.feedback.emit(locked_notice)
+		return
 	# Furniture owns the press before overlapping targets, as in canonical input.
 	if chapter4_layers!=null and scene_id=="duan_yongping_temporal_maze" and not chapter4_layers.pick_drag(point,State.d).is_empty(): return
 	var clicked:=_pick_target(point)
@@ -1811,7 +1908,7 @@ func _mobile_floor_tap(local: Vector2) -> void:
 	if resolved!=goal:
 		goal=resolved
 		_floor_goal=goal+PlayerMetrics.FOOT_CENTER_OFFSET
-	_floor_route=_floor_planner.plan(player,goal,obstacles,_floor_bounds,_floor_stand,func(a: Vector2,b: Vector2): return _floor_segment_clear(a,b,obstacles,true))
+	_floor_route=_plan_floor_route(player,goal,obstacles)
 	if _floor_route.is_empty(): _stop_floor_route()
 	else: _floor_status="moving"
 	grab_focus(); queue_redraw()

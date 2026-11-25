@@ -28,7 +28,7 @@ func run()->void:
 	world=load("res://scripts/world.gd").new();world.size=Vector2(960,540);root.add_child(world)
 	await process_frame;world.set_process(false);world.mobile_exploration=true;world.touch_controls=true
 	var metrics:Dictionary=world.mobile_control_metrics()
-	check(metrics.scheme=="direct_world" and not metrics.has("stick") and not metrics.has("interact"),"direct scene exposes no permanent or invisible virtual controls")
+	check(metrics.scheme=="direct_world" and metrics.has("stick") and not metrics.has("interact"),"touch movement has a visible stick while objects retain direct interaction")
 	check(metrics.gestureArea==world.exploration_safe_rect(true),"visible safe scene and actual gesture area share geometry")
 	var before:Vector2=world.player;var items:Dictionary=state.d.items.duplicate(true);var source_collisions:Array=world.collisions.duplicate(true)
 	var target:Vector2=local(Vector2(715,673.1875))
@@ -76,6 +76,14 @@ func run()->void:
 			"drag":touch(33,Vector2(300,200),true);drag(33,Vector2(320,200),Vector2(20,0));touch(33,Vector2(320,200),false)
 		for i:int in range(100):world._process(.016)
 		check(world._floor_pending_interaction.is_empty() and world._floor_route.is_empty() and actions.is_empty() and world.player==before,"cancelled pending approach never resumes or submits a stale controller "+reason)
+	fixture();state.d.ui.libraryFinalsPuzzle.entranceRecordRead=false;world.player=Vector2(715,842);world._sync_player();world._update_camera();world.library_door.sync(state.d,true);world.queue_redraw();await process_frame
+	approach=local(Vector2(750,727));touch(34,approach,true);touch(34,approach,false)
+	for row:Dictionary in world.targets:
+		if row.id=="entrance_record":row.label="记录提示已刷新"
+	for i:int in range(200):
+		world._process(.016)
+		if world._floor_route.is_empty():break
+	check(actions.count("lib_open_record")==1 and state.d.native.page=="library_record","presentation-only target refresh does not cancel the owned approach")
 	fixture();var a:=Vector2(430,220);before=world.player;var old_camera:Vector2=world.camera
 	touch(2,a,true);drag(2,a+Vector2(30,0),Vector2(30,0));drag(2,a,Vector2(-30,0));touch(2,a,false)
 	check(world._floor_route.is_empty() and world.player==before and actions.is_empty(),"drag that returns to origin never leaks a click or floor walk")

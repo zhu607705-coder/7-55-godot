@@ -25,11 +25,13 @@ const plateUrl = new URL("../src/assets/rpg/campus/zijingang_campus_plate.png", 
 const maskUrl = new URL("../src/assets/rpg/campus/zijingang_road_walkability_mask.png", import.meta.url);
 const runtimeUrl = new URL("../src/data/maps/zijingang-campus-runtime.json", import.meta.url);
 const bootSceneUrl = new URL("../src/scenes/rpg/BootScene.ts", import.meta.url);
-const [plate, mask, runtimeText, bootSceneSource] = await Promise.all([
+const nativeWorldUrl = new URL("../godot_native/scripts/world.gd", import.meta.url);
+const [plate, mask, runtimeText, bootSceneSource, nativeWorldSource] = await Promise.all([
   readFile(plateUrl),
   readFile(maskUrl),
   readFile(runtimeUrl, "utf8"),
-  readFile(bootSceneUrl, "utf8")
+  readFile(bootSceneUrl, "utf8"),
+  readFile(nativeWorldUrl, "utf8")
 ]);
 const runtime = JSON.parse(runtimeText);
 const pngSignature = "89504e470d0a1a0a";
@@ -70,9 +72,18 @@ for (const [name, actual, expected] of [
 }
 if (
   !bootSceneSource.includes("findPath(CANTEEN_HUNT_SPAWN, CANTEEN_APPROACH)")
+  || !bootSceneSource.includes("new CampusPathGrid(campusRuntimeData.walkability, 16)")
   || !bootSceneSource.includes('if (state.rpgCheckpoint === "campus_canteen_gate") return CANTEEN_GATE;')
 ) {
-  throw new Error("Canteen tracking route and campus return spawn must remain separate");
+  throw new Error("Campus navigation must keep narrow paths connected and retain separate canteen tracking and return spawns");
+}
+if (
+  !bootSceneSource.includes('const CRESCENT_UNAVAILABLE_TEXT = "此路不通，月牙楼暂未对你开放。";')
+  || !bootSceneSource.includes("isCrescentBuildingLocked(worldX, worldY)")
+  || !nativeWorldSource.includes("func _campus_locked_landmark_message(point: Vector2) -> String:")
+  || !nativeWorldSource.includes('return "此路不通，月牙楼暂未对你开放。"')
+) {
+  throw new Error("Campus navigation must explain that the Yueya Building route is not open yet");
 }
 const foundationLibrary = runtime.landmarks?.find((landmark) => landmark.id === "foundation_library");
 if (JSON.stringify(foundationLibrary) !== JSON.stringify({ id: "foundation_library", ...EXPECTED.foundationLibrary })) {
