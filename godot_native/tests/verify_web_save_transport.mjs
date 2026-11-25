@@ -173,18 +173,18 @@ try {
     invalid.host.dispose();
   }
 
-  const missing = fixture({ mode: 'missing' }); missing.watch(20); await missing.advance(19999);
+  const missing = fixture({ mode: 'missing' }); missing.watch(20); await missing.advance(59999);
   check('missing entry remains pending until the bounded timeout', () => {
     assert(!missing.calls.some(call => call.args[2])); assert(missing.guarded());
   });
-  await missing.advance(1001);
+  await missing.advance(1);
   check('missing entry reaches an explicit timeout rather than silent success', () => {
     assert(missing.calls.some(call => call.args[1] == null && call.args[2])); assert(missing.guarded());
   });
   missing.host.dispose();
 
-  for (const [label, options] of [['open-never-settles', { mode: 'open-pending' }], ['get-settles-after-deadline', { readDelay: 25000 }]]) {
-    const stalled = fixture(options); stalled.watch(21); await stalled.advance(19999);
+  for (const [label, options] of [['open-never-settles', { mode: 'open-pending' }], ['get-settles-after-deadline', { readDelay: 65000 }]]) {
+    const stalled = fixture(options); stalled.watch(21); await stalled.advance(59999);
     check(`${label} has no premature completion`, () => assert.equal(stalled.calls.length, 0));
     await stalled.advance(1);
     check(`${label} reaches its watchdog deadline even with an unresolved database operation`, () => {
