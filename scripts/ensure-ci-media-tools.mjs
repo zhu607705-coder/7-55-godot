@@ -63,13 +63,20 @@ export function prepareFallback(source, mirrors, temporaryMirrorPath) {
   requireCondition(stanzas > 0 && ['', '-updates', '-backports', '-security'].every(suffix => seenSuites.has(`${codename}${suffix}`)), 'incomplete Ubuntu source pockets');
   requireCondition(typeof mirrors === 'string', 'invalid mirror list');
   const selected = [];
-  const seen = new Set();
+  const seen = new Map();
   for (const raw of mirrors.split(/(?<=\n)/)) {
     const line = raw.replace(/\r?\n$/, '');
     if (line.trim() === '' || line.startsWith('#')) continue;
     const match = /^(\S+)[ \t]+priority:([1-3])$/.exec(line);
-    requireCondition(match && KNOWN_MIRRORS.includes(match[1]) && !seen.has(match[1]), 'unknown or duplicate mirror');
-    seen.add(match[1]);
+    requireCondition(match && KNOWN_MIRRORS.includes(match[1]), 'unknown or duplicate mirror');
+    // Some Ubuntu runner images append the same approved mirror stanza more
+    // than once while composing the image. Accept and collapse only an exact
+    // duplicate line. A known host with a different priority remains invalid.
+    if (seen.has(match[1])) {
+      requireCondition(seen.get(match[1]) === line, 'unknown or duplicate mirror');
+      continue;
+    }
+    seen.set(match[1], line);
     if (HTTPS_MIRRORS.includes(match[1])) selected.push(raw.endsWith('\n') ? raw : `${raw}\n`);
   }
   requireCondition(HTTPS_MIRRORS.every(uri => seen.has(uri)), 'official HTTPS fallback mirrors are not already present');

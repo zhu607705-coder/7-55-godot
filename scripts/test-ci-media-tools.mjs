@@ -215,11 +215,15 @@ for (const [name, mirrors] of Object.entries({
   'new protocol': MIRRORS.replace('https://archive.', 'http://archive.'),
   'credentials': MIRRORS.replace('https://archive.', 'https://user:password@archive.'),
   'missing existing official route': MIRRORS.split('\n').slice(0, 2).join('\n'),
-  'duplicate mirror': MIRRORS + MIRRORS.split('\n')[1] + '\n',
 })) test(`reject mirror ${name}, never invent a fallback host`, () => {
   const r = scenario({ mirrors });
   assert(r.error);
   assert.equal(r.calls.filter(c => c.command === 'sudo').length, 0);
+});
+test('collapse exact duplicate official mirror lines without inventing a host', () => {
+  const mirrors = MIRRORS + MIRRORS.split('\n')[1] + '\n';
+  const prepared = prepareFallback(SOURCE, mirrors, TEMP_MIRROR);
+  assert.equal(prepared.mirrors, MIRRORS.slice(MIRRORS.indexOf('https://archive')));
 });
 test('inverse replacement preserves CRLF, comments, tabs and final newline bytes', () => {
   const source = SOURCE.replace('Public Ubuntu source;', '注释 mirror+file:/etc/apt/apt-mirrors.txt;').replaceAll('URIs: ', 'URIs:\t').replaceAll('\n', '\r\n');
