@@ -1,5 +1,6 @@
 export type BrowserEngine = "blink" | "webkit" | "gecko" | "unknown";
 export type ClientPlatform = "ios" | "android" | "desktop";
+export type ClientDeviceKind = "phone" | "tablet" | "desktop";
 export type InputProfile = "fine" | "coarse" | "hybrid" | "unknown";
 
 export interface ClientViewportMetrics {
@@ -13,6 +14,8 @@ export interface ClientViewportMetrics {
 export interface ClientCompatibilitySnapshot {
   engine: BrowserEngine;
   platform: ClientPlatform;
+  deviceKind: ClientDeviceKind;
+  deviceModel: string;
   inputProfile: InputProfile;
   viewport: ClientViewportMetrics;
   capabilities: {
@@ -84,6 +87,31 @@ export function detectClientPlatform(): ClientPlatform {
   return "desktop";
 }
 
+export function detectClientDeviceKind(): ClientDeviceKind {
+  if (typeof navigator === "undefined") return "desktop";
+  const userAgent = navigator.userAgent;
+  const touchPoints = navigator.maxTouchPoints ?? 0;
+  const ipadOs = /Macintosh/i.test(userAgent) && touchPoints > 1;
+  const android = /Android/i.test(userAgent);
+  const phone = /Android.*Mobile/i.test(userAgent) || /iPhone|iPod|Windows Phone/i.test(userAgent);
+  const tablet = /iPad/i.test(userAgent) || ipadOs || (android && !/Mobile/i.test(userAgent));
+  return phone && !tablet ? "phone" : tablet ? "tablet" : "desktop";
+}
+
+export function detectClientDeviceModel(kind = detectClientDeviceKind()): string {
+  if (typeof navigator === "undefined") return "desktop";
+  const browserNavigator = navigator as Navigator & {
+    userAgentData?: { model?: string; platform?: string };
+  };
+  const reportedModel = browserNavigator.userAgentData?.model?.trim();
+  if (reportedModel) return reportedModel;
+  if (kind === "phone") return /Android/i.test(navigator.userAgent) ? "Android phone" : "iPhone";
+  if (kind === "tablet") {
+    return /iPad|Macintosh/i.test(navigator.userAgent) ? "iPad" : "Android tablet";
+  }
+  return browserNavigator.userAgentData?.platform || navigator.platform || "desktop";
+}
+
 export function detectInputProfile(): InputProfile {
   if (typeof window === "undefined") return "unknown";
   const hasFine = mediaMatches("(any-pointer: fine)") || mediaMatches("(pointer: fine)");
@@ -143,6 +171,8 @@ export function getClientCompatibilitySnapshot(): ClientCompatibilitySnapshot {
   return {
     engine: detectBrowserEngine(),
     platform: detectClientPlatform(),
+    deviceKind: detectClientDeviceKind(),
+    deviceModel: detectClientDeviceModel(),
     inputProfile: detectInputProfile(),
     viewport: getClientViewportMetrics(),
     capabilities: {

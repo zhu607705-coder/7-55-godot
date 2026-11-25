@@ -707,10 +707,10 @@ func _tiyi_official_account() -> Control:
 		var card=_panel(root,Rect2(22,183,334,330),Color.WHITE,Color("cbd3d9"),8,1)
 		card.name="TiyiDownloadCard"
 		_label(card,"浙大体艺 APP",Rect2(16,15,302,35),22,BLUE,HORIZONTAL_ALIGNMENT_CENTER)
-		_label(card,"游戏内更新",Rect2(16,57,302,26),12,MUTED,HORIZONTAL_ALIGNMENT_CENTER)
-		_label(card,"仅模拟扫码、获取和安装。\n不调用设备权限，不下载真实应用。",Rect2(20,103,294,62),14,INK,HORIZONTAL_ALIGNMENT_CENTER)
+		_label(card,"官方更新包",Rect2(16,57,302,26),12,MUTED,HORIZONTAL_ALIGNMENT_CENTER)
+		_label(card,"通过公众号获取官方更新包，安装后即可使用。",Rect2(20,103,294,62),14,INK,HORIZONTAL_ALIGNMENT_CENTER)
 		if stage=="official_entry_found":
-			_act(card,"模拟扫码获取更新",Rect2(25,194,284,52),"c2_tiyi_acquire",null,Color("168c54"),Color.WHITE,6).name="TiyiAcquireUpdate"
+			_act(card,"扫码获取更新",Rect2(25,194,284,52),"c2_tiyi_acquire",null,Color("168c54"),Color.WHITE,6).name="TiyiAcquireUpdate"
 			_label(card,"需要网络连接",Rect2(20,265,294,28),12,MUTED,HORIZONTAL_ALIGNMENT_CENTER)
 		elif stage=="package_ready":
 			_label(card,"更新包已就绪",Rect2(20,172,294,28),14,BLUE,HORIZONTAL_ALIGNMENT_CENTER)

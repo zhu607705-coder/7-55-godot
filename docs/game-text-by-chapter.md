@@ -13119,13 +13119,13 @@
    来源：[src/scenes/phone/P14_Wechat/index.tsx:712](../src/scenes/phone/P14_Wechat/index.tsx#L712)
 2111. 现场照片 · 3F
    来源：[src/scenes/phone/P14_Wechat/index.tsx:716](../src/scenes/phone/P14_Wechat/index.tsx#L716)
-2112. 不调用设备权限，不下载真实应用。
+2112. 通过公众号获取官方更新包，安装后即可使用。
    来源：[src/scenes/phone/P14_Wechat/index.tsx:776](../src/scenes/phone/P14_Wechat/index.tsx#L776)
-2113. 仅模拟扫码、获取和安装。
+2113. 官方更新包
    来源：[src/scenes/phone/P14_Wechat/index.tsx:776](../src/scenes/phone/P14_Wechat/index.tsx#L776)
 2114. 需要联网才能获取更新包。
    来源：[src/scenes/phone/P14_Wechat/index.tsx:779](../src/scenes/phone/P14_Wechat/index.tsx#L779)
-2115. 模拟扫码获取更新
+2115. 扫码获取更新
    来源：[src/scenes/phone/P14_Wechat/index.tsx:780](../src/scenes/phone/P14_Wechat/index.tsx#L780)
 2116. 需要网络连接
    来源：[src/scenes/phone/P14_Wechat/index.tsx:780](../src/scenes/phone/P14_Wechat/index.tsx#L780)

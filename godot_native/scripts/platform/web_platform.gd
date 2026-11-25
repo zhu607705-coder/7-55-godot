@@ -1,5 +1,6 @@
 extends Node
 ## Browser capabilities only. State remains the sole save/progression authority.
+const DeviceProfile=preload("res://scripts/device_profile.gd")
 signal import_finished(message: String)
 signal save_feedback(message: String)
 const IMPORT_PATH := "user://web-save-import.json"
@@ -499,7 +500,7 @@ func read_snapshot() -> Dictionary:
 	var save := FileAccess.get_file_as_string(state.SAVE_PATH) if FileAccess.file_exists(state.SAVE_PATH) else ""
 	var content: Dictionary = shell.get_node("/root/WebContent").read_snapshot()
 	if content.get("retryVisible", false): controls.append({"name": "RetryRequiredContent", "text": "重试", "type": "Button", "rect": content.retryRect, "disabled": false})
-	return {"sampleFrame": Engine.get_process_frames(), "engine": "Godot", "version": Engine.get_version_info().string, "web": OS.has_feature("web"), "documentHidden": _document_hidden, "content": content, "savePersistence": read_save_persistence(), "persistentStorageAvailable": OS.is_userfs_persistent(), "state": state.d.duplicate(true), "visibleControls": controls, "activeGame": game, "world": world, "phoneRect": _rect(shell.phone.get_global_rect()), "viewport": _rect(shell.get_viewport_rect()), "audio": audio, "video": video, "saveDigest": save.sha256_text() if not save.is_empty() else "", "developerToolsAvailable": state.developer_tools_available()}
+	return {"sampleFrame": Engine.get_process_frames(), "engine": "Godot", "version": Engine.get_version_info().string, "web": OS.has_feature("web"), "device": DeviceProfile.snapshot(), "documentHidden": _document_hidden, "content": content, "savePersistence": read_save_persistence(), "persistentStorageAvailable": OS.is_userfs_persistent(), "state": state.d.duplicate(true), "visibleControls": controls, "activeGame": game, "world": world, "presentation":{"landscapePreferred":landscape_preferred}, "phoneRect": _rect(shell.phone.get_global_rect()), "viewport": _rect(shell.get_viewport_rect()), "audio": audio, "video": video, "saveDigest": save.sha256_text() if not save.is_empty() else "", "developerToolsAvailable": state.developer_tools_available()}
 
 func _exit_tree() -> void:
 	if _browser != null: _browser.dispose()

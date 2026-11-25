@@ -1,5 +1,6 @@
 extends Control
 const SelectedUi=preload("res://scripts/ui/selected_ui_theme.gd")
+const DeviceProfile=preload("res://scripts/device_profile.gd")
 ## Native phone and RPG shell. All story changes pass through State.
 var phone: PanelContainer
 var phone_content: VBoxContainer
@@ -50,7 +51,7 @@ var modal_previous_focus: WeakRef
 # Room 302 alone replaces the shell with an opaque full-window studio.
 var room302_studio: Control
 var room302_shell_restore: Dictionary = {}
-var room302_input_mode := "touch" if DisplayServer.is_touchscreen_available() else "keyboard"
+var room302_input_mode := "touch" if DeviceProfile.uses_touch_controls() else "keyboard"
 var relayout_pending := false
 var active_game: Control
 var font: Font
@@ -392,7 +393,7 @@ func _uses_split_layout() -> bool:
 	return false
 
 func _uses_compact_layout() -> bool:
-	return DisplayServer.is_touchscreen_available() or size.x < 1100 or size.x <= size.y
+	return DeviceProfile.is_mobile() or size.x < 1100 or size.x <= size.y
 
 func _has_world_scene() -> bool:
 	return not str(State.d.get("native",{}).get("scene","")).is_empty()

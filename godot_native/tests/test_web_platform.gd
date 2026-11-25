@@ -40,6 +40,8 @@ func run() -> void:
 	var backup := disk(state.BACKUP_PATH)
 	var snapshot: Dictionary = bridge.read_snapshot()
 	check(snapshot.engine == "Godot" and not snapshot.web and not snapshot.version.is_empty(), "snapshot identifies the actual engine")
+	check(snapshot.device.kind in ["phone", "tablet", "desktop"] and not str(snapshot.device.model).is_empty() and snapshot.device.inputProfile in ["coarse", "fine", "hybrid", "unknown"], "snapshot identifies device kind, model and input capability")
+	check(snapshot.device.kind == "desktop" and not shell.world.touch_controls, "headless desktop profile does not enable the movement stick")
 	check(snapshot.state == before and not snapshot.visibleControls.is_empty(), "snapshot observes real state and rendered controls")
 	check(snapshot.saveDigest == primary.get_string_from_utf8().sha256_text(), "save digest describes actual autosave bytes")
 	check(snapshot.world.camera == bridge._json_value(shell.world.camera) and snapshot.world.size == bridge._json_value(shell.world.size) and snapshot.world.zoom == shell.world.zoom, "read-only world geometry matches the actual camera, viewport and uniform zoom")

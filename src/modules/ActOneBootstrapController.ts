@@ -244,7 +244,7 @@ export class ActOneBootstrapController {
     return "connected";
   }
 
-  /** Contact-us download card, simulated acquisition and install are separate intents. */
+  /** Contact-us download card, acquisition and install are separate intents. */
   discoverTiyiUpdate(): boolean {
     const state = this.store.getState();
     if (!tiyiUpdateRequired(state)) return false;
