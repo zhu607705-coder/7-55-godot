@@ -1558,6 +1558,7 @@ func _sync_inventory_dock_input() -> void:
 	for button in inventory_buttons.get_children():
 		if blocked and not button.disabled: button.cancel_gesture()
 		button.disabled=blocked
+	if is_instance_valid(mobile_back): mobile_back.disabled=navigation_blocked
 
 func _refresh_inventory_dock() -> void:
 	# Selection refreshes must preserve pointer ownership, focus, order and scroll.
