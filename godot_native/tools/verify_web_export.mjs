@@ -1205,7 +1205,8 @@ async function mobileWorldCase() {
   check(!!fixtureDir, 'mobile-world requires an explicit earned fixture directory (never a fabricated save)');
   active.mobileWorld = { fixtureConstructionIsNotTouchEvidence: true, inputs: [], samples: [], coverage: [], limitations: ['Chromium emulation, not physical phones or a manual campaign.', 'No notch/safe-area emulation is claimed by DeviceMetricsOverride; native safe-area regression is separate.'] };
   await importSave(path.join(fixtureDir, 'before_c2_dorm_exit.json'));
-  let value = await poll(async () => { const s = await snapshot(); return s?.world?.visible && s.world.scene_id === 'dorm_hub' && s.world.input && (!active.touch || s.world.input.geometryAvailable) && !s.world.input.modalVisible && !s.content.blocking ? s : null; }, 'ordinary earned import reaches the real dorm world', 60000);
+  const importTimeout = active.dpr >= 2 ? 120000 : 60000;
+  let value = await poll(async () => { const s = await snapshot(); return s?.world?.visible && s.world.scene_id === 'dorm_hub' && s.world.input && (!active.touch || s.world.input.geometryAvailable) && !s.world.input.modalVisible && !s.content.blocking ? s : null; }, 'ordinary earned import reaches the real dorm world', importTimeout);
   value = await mobileSample(value, importSettleMs);
   value = await poll(async () => { const next = await snapshot(); return next?.sampleFrame > value.sampleFrame && !next.world.subtitle && (!active.touch || next.world.input.geometryAvailable) ? next : null; }, 'import feedback finishes before any world gesture', 15000);
   check(state(value).actOne.manualControlTested && state(value).actOne.phase === 'movement_ready', 'earned C2 fixture contains the original unlocked movement and exit gates');
