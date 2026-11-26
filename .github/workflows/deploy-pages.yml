@@ -29,7 +29,7 @@ concurrency:
 jobs:
   build:
     name: Build Godot Web game
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     outputs:
       bundle_name: ${{ steps.acceptance_bundle.outputs.bundle_name }}
@@ -291,7 +291,7 @@ jobs:
     # A failed baseline still permits independent diagnostics from sealed inputs.
     if: ${{ !cancelled() && needs.build.outputs.bundle_ready == 'true' }}
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Bounded first isolation pass; three runners add up to 36 runner-minutes,
     # not 12. Together with build the ceiling is 61 runner-minutes, not 25.
     timeout-minutes: 12
@@ -447,7 +447,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [build, browser_profiles]
     steps:
       - name: Configure Pages
