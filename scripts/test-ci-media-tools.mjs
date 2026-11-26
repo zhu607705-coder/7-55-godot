@@ -225,6 +225,11 @@ test('collapse exact duplicate official mirror lines without inventing a host', 
   const prepared = prepareFallback(SOURCE, mirrors, TEMP_MIRROR);
   assert.equal(prepared.mirrors, MIRRORS.slice(MIRRORS.indexOf('https://archive')));
 });
+test('accept the documented AWS cloud mirror route without selecting it as fallback', () => {
+  const mirrors = MIRRORS.replace('http://azure.archive.ubuntu.com/ubuntu/', 'http://us-east-2.ec2.archive.ubuntu.com/ubuntu/');
+  const prepared = prepareFallback(SOURCE, mirrors, TEMP_MIRROR);
+  assert.equal(prepared.mirrors, MIRRORS.slice(MIRRORS.indexOf('https://archive')));
+});
 test('collapse repeated official mirror hosts with runner-assigned priority changes', () => {
   const mirrors = MIRRORS + 'https://archive.ubuntu.com/ubuntu/\tpriority:1\n';
   const prepared = prepareFallback(SOURCE, mirrors, TEMP_MIRROR);

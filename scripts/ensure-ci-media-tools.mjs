@@ -9,7 +9,16 @@ const MIRRORS = '/etc/apt/apt-mirrors.txt';
 const MIRROR_URI = `mirror+file:${MIRRORS}`;
 const KEYRING = '/usr/share/keyrings/ubuntu-archive-keyring.gpg';
 const HTTPS_MIRRORS = ['https://archive.ubuntu.com/ubuntu/', 'https://security.ubuntu.com/ubuntu/'];
-const KNOWN_MIRRORS = ['http://azure.archive.ubuntu.com/ubuntu/', ...HTTPS_MIRRORS];
+// GitHub's Ubuntu images choose the cloud-local route at image build time.
+// Azure uses its archive host while AWS runners may publish the documented
+// us-east-2 EC2 archive host. Both are runner-provided official routes. They
+// are accepted only as existing entries, while fallback acquisition still
+// selects the two fixed HTTPS mirrors below.
+const KNOWN_MIRRORS = [
+  'http://azure.archive.ubuntu.com/ubuntu/',
+  'http://us-east-2.ec2.archive.ubuntu.com/ubuntu/',
+  ...HTTPS_MIRRORS,
+];
 const SECURITY = [
   '-o', 'APT::Get::AllowUnauthenticated=false',
   '-o', 'Acquire::AllowInsecureRepositories=false',
