@@ -1526,10 +1526,12 @@ async function browserCase(id, width, height, touch, dpr = 1) {
       if (method === 'Network.loadingFailed' && !params.canceled) {
         const request = active.requestsById.get(params.requestId);
         const failure = { type: 'network', requestId: params.requestId, url: request?.url || '', phase: request?.phase || '', errorText: params.errorText, blockedReason: params.blockedReason || '' };
-        // Chromium 155 reports an empty errorText for Network.setBlockedURLs;
-        // blockedReason=inspector and the exact active injected URL remain the
-        // authoritative, narrowly scoped fault identity. Keep the raw event.
-        if (active.streaming && request?.controlled && active.deferredUrls.has(request.url) && ['', 'net::ERR_BLOCKED_BY_CLIENT'].includes(params.errorText || '') && params.blockedReason === 'inspector') active.streaming.controlledFailures.push(failure);
+        // Chromium 155 reports an empty errorText for Network.setBlockedURLs.
+        // A blocked request can finish reporting after the retry clears the
+        // current URL set, so the exact declared deferred URL plus the
+        // inspector reason are the authoritative fault identity.
+        const injectedStreamingBlock = active.streaming && active.deferredUrls.has(failure.url) && ['', 'net::ERR_BLOCKED_BY_CLIENT'].includes(params.errorText || '') && params.blockedReason === 'inspector';
+        if (injectedStreamingBlock) active.streaming.controlledFailures.push(failure);
         else if (active.bootFontFault && request?.controlled && active.bootFontFault.urls.includes(request.url) && ['', 'net::ERR_BLOCKED_BY_CLIENT'].includes(params.errorText || '') && params.blockedReason === 'inspector') active.bootFontFault.failures.push(failure);
         else errors.push(failure);
       }
