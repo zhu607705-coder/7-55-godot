@@ -95,9 +95,12 @@ export async function phoneRecoveryCase(h) {
     await shot(`dock-${percent}-charged`);
     await click('DeskPhonePickup'); await page('bonsai');
     await click('ControlCenterTrigger');
-    const before = await read();
+    const before = await h.poll(async () => {
+      const current = await read();
+      const control = current.visibleControls.find(c => c.name === 'ControlBrightness');
+      return control?.rect?.height > 0 ? current : null;
+    }, 'real brightness control geometry is observable');
     const slider = before.visibleControls.find(c => c.name === 'ControlBrightness');
-    h.check(slider?.rect?.height > 0, `${h.id}: real brightness control geometry is observable`);
     evidence.inputs.push({ name: 'ControlBrightness', method: h.touch ? 'ordinaryTouchTap' : 'ordinaryMouseClick', at: Date.now() });
     await h.clickPoint(await h.renderPoint({ x: slider.rect.x + slider.rect.width / 2, y: slider.rect.y + slider.rect.height * .05 }, before));
     await h.poll(async () => (await read()).state.ui.brightness >= 80, 'manual brightness reaches original plant threshold');
