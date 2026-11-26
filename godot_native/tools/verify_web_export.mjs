@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 41475)
-Total output lines: 1657
-
 #!/usr/bin/env node
 // Accepts the independent Godot Web export. No React APIs, writable game bridge,
 // virtual game clock, chapter URL, or injected progression state is used.
@@ -630,7 +627,419 @@ async function checkinPresentationCase() {
   const phoneFrame=JSON.stringify(learn.phoneRect);
   check(['LearnSchedule','LearnCourse_0','LearnCourse_1','LearnNotice','ZjudingCheckin'].every(name=>controls(learn).some(c=>c.name===name&&c.type==='Button')),`${active.id}: learning cards are independent visible controls`);
   active.screenshots.push(await screenshot(`${active.id}-native-learn-dashboard`));
-  for(co…11475 tokens truncated…treaming.recovery = { at: Date.now(), evidence: storyEvidence(await snapshot()), content: ready.content, realKeyboardMovement: moved };
+  for(const [name,title] of [['LearnSchedule','今日课程'],['LearnCourse_1','化学工程基础'],['LearnNotice','课堂提醒']]) {
+    await clickControl(name,'name');
+    const detail=await poll(async()=>{const s=await snapshot();return controls(s).some(c=>c.name==='LearnReaderTitle'&&c.text===title)?s:null;},'native learning card opens '+title);
+    check(JSON.stringify(detail.phoneRect)===phoneFrame,`${active.id}: ${title} preserves phone frame`);
+    if(active.touch)await clickControl('LearnReaderBack','name');else await press('Escape');
+    await poll(async()=>!controls(await snapshot()).some(c=>c.name==='LearnReaderTitle'),'learning reader closes to its parent dashboard');
+    const after=await snapshot();
+    check(JSON.stringify([state(after).items,state(after).flags.checkinDone,state(after).actOne.phase])===learningFacts,`${active.id}: ${title} does not write story progress`);
+  }
+  await clickControl('PhoneNav_back','name');
+  await clickControl('ZjudingApp_learn','name');
+  await clickControl('ZjudingCheckin','name');
+  const page=await poll(async()=>{const s=await snapshot();return state(s)?.native.page==='checkin'&&controls(s).some(c=>c.name==='CheckinSubmit'&&c.disabled)?s:null;},'original check-in form opens through ZJU Ding');
+  check(!state(page).flags.checkinDone,`${active.id}: earned pre-check-in state remains unsolved`);
+  await clickControl('PhoneNav_back','name');
+  await poll(async()=>controls(await snapshot()).some(c=>c.name==='ZjudingLearnTitle'),'check-in returns to the real learning dashboard');
+  await clickControl('ZjudingCheckin','name');
+  active.screenshots.push(await screenshot(`${active.id}-pixel-checkin`));
+  await clickControl('CheckinKey_1','name');await clickControl('CheckinKey_2','name');await clickControl('CheckinKey_delete','name');
+  check(controls(await snapshot()).find(c=>c.name==='CheckinSlot_0')?.text==='1'&&controls(await snapshot()).find(c=>c.name==='CheckinSlot_1')?.text==='',`${active.id}: restored pixel keys preserve delete behavior`);
+  for(const digit of ['2','3','4'])await clickControl('CheckinKey_'+digit,'name');
+  await clickControl('CheckinSubmit','name');
+  const rejected=await poll(async()=>{const s=await snapshot();return controls(s).some(c=>c.name==='CheckinError')&&!state(s).flags.checkinDone?s:null;},'wrong code remains a controller-owned rejection');
+  check(controls(rejected).find(c=>c.name==='CheckinSlot_0')?.text==='',`${active.id}: wrong code clears only the form draft`);
+  for(const digit of ['0','7','9','8'])await clickControl('CheckinKey_'+digit,'name');
+  await clickControl('CheckinSubmit','name');
+  await poll(async()=>gameOf(await snapshot())?.phase==='success','real successful submission starts the receipt printer');
+  active.screenshots.push(await screenshot(`${active.id}-pixel-receipt-printing`));
+  await press('Escape');
+  const paused=await poll(async()=>{const s=await snapshot();return gameOf(s)?.paused?s:null;},'real Escape pauses receipt printing');
+  const frozen=gameOf(paused).elapsed;await interval(450);
+  check(Math.abs(gameOf(await snapshot()).elapsed-frozen)<.01,`${active.id}: printer uses the paused game clock`);
+  await clickControl('PrologueResume','name');
+  const printed=await poll(async()=>{const s=await snapshot(),g=gameOf(s);return g?.phase==='success'&&g.elapsed>=1.9?s:null;},'real paper finishes feeding through its original top slot');
+  check(controls(printed).some(c=>c.name==='CheckinSuccessLabel'&&c.text==='签到成功')&&state(printed).flags.checkinDone&&state(printed).actOne.phase==='prologue',`${active.id}: live printed stamp confirms check-in without completing the word puzzle`);
+  active.screenshots.push(await screenshot(`${active.id}-pixel-parchment-receipt`));
+  await poll(async()=>gameOf(await snapshot())?.phase==='error','receipt preserves the authored coordinate-error handoff');
+  check(gameOf(await snapshot()).session?.completed_stages===0,`${active.id}: visual restoration grants no interception completion`);
+  await assertLayout('pixel check-in and parchment receipt');
+}
+async function reopenLibraryRuleThroughApp() {
+  // A portable import accepts validated state before its deferred content has
+  // mounted. Wait for the actual target surface before the first user input.
+  const initial = await poll(async () => {
+    const value = await snapshot();
+    if (value?.content?.blocking) return null;
+    if (value?.world?.visible) {
+      if (value.world.scene_id !== state(value)?.native.scene || !controls(value).some(c => c.name === 'WorldPhoneButton' && !c.disabled)) return null;
+    } else if (!controls(value).some(c => c.name === 'LibraryRuleAction')) return null;
+    return value;
+  }, 'imported Library surface has actually mounted', 60000);
+  if (controls(initial).some(c => c.name === 'LibraryRuleAction')) return;
+  if (initial.world?.visible) {
+    active.library ||= { navigation: [] };
+    active.library.navigation ||= [];
+    const button = controls(initial).find(c => c.name === 'WorldPhoneButton');
+    active.library.navigation.push({ at: Date.now(), phase: 'before-map-return', button, viewport: initial.viewport, canvas: await canvasGeometry(), world: initial.world });
+    await clickControl('WorldPhoneButton', 'name');
+    const after = await snapshot();
+    active.library.navigation.push({ at: Date.now(), phase: 'after-map-return', page: state(after).native.page, world: after.world,
+      browser: await evaluate(`(()=>({focused:document.hasFocus(),hidden:document.hidden,active:document.activeElement?.tagName,orientation:window.__GODOT_755_ORIENTATION__?.snapshot()}))()`) });
+  }
+  await clickControl('HomeApp_zjuding', 'name');
+  await clickControl('ZjudingApp_library', 'name');
+  await clickControl('LibraryApp_rule', 'name');
+}
+async function libraryCase() {
+  if (!fixtureDir) throw new Error('Library continuity requires controller-earned portable boundaries');
+  await importSave(path.join(fixtureDir, 'before_library_rule_read.json'));
+  await reopenLibraryRuleThroughApp();
+  let value = await poll(async () => { const s = await snapshot(); return state(s)?.native.page === 'library_rule' && controls(s).some(c => c.name === 'LibraryRuleAction') ? s : null; }, 'earned unread rule opens its original reader');
+  const originalItems = JSON.stringify(state(value).items);
+  check(state(value).ui.libraryFinalsPuzzle.archivedRuleCollected && !state(value).ui.libraryFinalsPuzzle.archivedRuleRead, `${active.id}: acquired rule is still unread`);
+  await clickControl('PhoneNav_back', 'name');
+  value = await poll(async () => { const s = await snapshot(); return state(s)?.native.page === 'library_app' ? s : null; }, 'ordinary rule header returns to Library home');
+  check(controls(value).some(c => c.name === 'LibraryApp_rule'), `${active.id}: acquired rule has a visible ordinary app entry`);
+  active.screenshots.push(await screenshot(`${active.id}-library-rule-entry`));
+  await clickControl('LibraryApp_rule', 'name');
+  value = await poll(async () => { const s = await snapshot(); return state(s)?.native.page === 'library_rule' && controls(s).some(c => c.name === 'LibraryRuleAction') ? s : null; }, 'app entry reopens original rule reader');
+  check(!state(value).ui.libraryFinalsPuzzle.archivedRuleRead && JSON.stringify(state(value).items) === originalItems, `${active.id}: reopening alone neither reads nor changes inventory`);
+  await settings(); await saveProgressAndWait(`${active.id} unread library rule`);
+  await startStory(true);
+  await reopenLibraryRuleThroughApp();
+  value = await poll(async () => { const s = await snapshot(); return state(s)?.native.page === 'library_rule' && controls(s).some(c => c.name === 'LibraryRuleAction') ? s : null; }, 'ordinary reload restores unread rule reader');
+  check(!state(value).ui.libraryFinalsPuzzle.archivedRuleRead, `${active.id}: reload never supplies the missing reading fact`);
+  await clickControl('LibraryRuleAction', 'name');
+  active.library ||= {};
+  active.library.dialogueSamples = [];
+  // The earned portable boundary may also restore earlier unacknowledged
+  // source dialogue. Advance the actual queue through normal input, observing
+  // each publication rather than assuming a fixed count of key presses.
+  for (let index = 0; index < 106; index++) {
+    const before = await snapshot();
+    if (state(before).ui.libraryFinalsPuzzle.archivedRuleBriefingSeen) break;
+    active.library.dialogueSamples.push({ at: Date.now(), frame: before.sampleFrame, text: controls(before).filter(c => c.type === 'Label').map(c => c.text) });
+    if (active.touch) {
+      const prompt = controls(before).find(c => /^点击 \/ 空格 \/ 回车(?:继续|确认)$/.test(c.text));
+      if (prompt) await clickPoint(await renderPoint({ x: prompt.rect.x + prompt.rect.width / 2, y: prompt.rect.y + prompt.rect.height / 2 }, before));
+    } else await press(' ', 'Space');
+    await poll(async () => (await snapshot())?.sampleFrame > before.sampleFrame, 'Library dialogue advances its real frame publication');
+  }
+  value = await poll(async () => { const s = await snapshot(); return state(s)?.ui.libraryFinalsPuzzle.archivedRuleRead && state(s).ui.libraryFinalsPuzzle.archivedRuleBriefingSeen ? s : null; }, 'explicit reading and original briefing complete');
+  check(JSON.stringify(state(value).items) === originalItems, `${active.id}: reading preserves the acquired original and other inventory`);
+  await clickControl('PhoneNav_back', 'name'); await clickControl('LibraryApp_rule', 'name');
+  value = await snapshot();
+  check(state(value).native.page === 'library_rule' && !controls(value).some(c => c.name === 'LibraryRuleAction'), `${active.id}: read rule remains reviewable without a second acknowledgement`);
+  active.screenshots.push(await screenshot(`${active.id}-library-rule-reviewed`));
+  await importSave(path.join(fixtureDir, 'before_library_022_opening.json'));
+  await poll(async () => controls(await snapshot()).some(c => c.text === '跳过演出'), 'earned022 seat starts its original transition');
+  await clickControl('跳过演出', 'text');
+  await clickControl('回到校园', 'text');
+  value = await poll(async () => { const s = await snapshot(); return state(s)?.native.chapter === 3 && state(s)?.native.scene === 'campus_bootstrap' ? s : null; }, 'ordinary022 arrival hands off to campus and Chapter3');
+  check(state(value).ui.libraryFinalsPhase === 'friend_contacted' && state(value).canteenHunt.active && state(value).canteenHunt.phase === 'tracking', `${active.id}: original controller starts the canteen hunt at the library exit`);
+  await interval(900); await settings(); await saveProgressAndWait(`${active.id} library handoff`); await startStory(true);
+  value = await snapshot();
+  check(state(value).native.chapter === 3 && state(value).ui.libraryFinalsPhase === 'friend_contacted' && state(value).canteenHunt.active, `${active.id}: reload retains completed library handoff`);
+  await poll(async () => { const s = await snapshot(); return !s.content?.blocking && s.world?.visible && s.world.scene_id === 'campus_bootstrap'; }, 'reloaded handoff presents the actual campus');
+  await acceptPortraitFallback();
+  const handoffFacts = JSON.stringify([state(value).items, state(value).ui.libraryFinalsPhase, state(value).canteenHunt, state(value).rpgCheckpoint]);
+  await clickControl('WorldPhoneButton', 'name');
+  await poll(async () => { const s = await snapshot(); return state(s).native.page === 'phone_home' && !s.world?.visible; }, 'library handoff permits an ordinary phone return');
+  await clickControl('PhoneWorldReturn', 'name');
+  await poll(async () => { const s = await snapshot(); return s.world?.visible && s.world.scene_id === 'campus_bootstrap'; }, 'library handoff permits an ordinary return to campus');
+  await acceptPortraitFallback();
+  value = await snapshot();
+  check(JSON.stringify([state(value).items, state(value).ui.libraryFinalsPhase, state(value).canteenHunt, state(value).rpgCheckpoint]) === handoffFacts, `${active.id}: handoff phone/map round trip preserves earned facts and items`);
+  await assertLayout(`${active.id} Library handoff`);
+  active.screenshots.push(await screenshot(`${active.id}-library-handoff`));
+  active.library = { ...active.library, completed: true, unreadReopen: true, explicitRead: true, reload: true, handoff: 'original skip-to-arrival button then ordinary return-to-campus', fixtureBoundary: 'controller-earned; not manual spatial navigation' };
+}
+
+async function mediaCase() {
+  if (!fixtureDir) return;
+  await importSave(path.join(fixtureDir, 'after_c35_replay.json')); await startStory(true);
+  const first = await poll(async () => { const s = await snapshot(); return s.video?.some(v => v.playing && !v.paused && v.position > .25 && v.stream.endsWith('.ogv')) ? s : null; }, 'real OGV VideoStreamPlayer advances', 30000);
+  const video = first.video.find(v => v.playing && v.stream.endsWith('.ogv')); const audio = await poll(async () => (await snapshot()).audio?.find(a => a.playing && !a.paused && a.position > .25), 'actual prologue audio stream playback', 15000);
+  await interval(2200); const second = await snapshot(); const video2 = second.video.find(v => v.stream === video.stream); const audio2 = second.audio.find(a => a.name === audio.name && a.stream === audio.stream);
+  check(video2 && video2.position > video.position + 1.2, 'actual decoded OGV stream position grows while visible'); check(audio2 && audio2.position > audio.position + 1.2, 'actual Godot audio playback position grows while visible');
+  active.mediaObservations.push({ phase: 'c4-prologue-playing', videoBefore: video, videoAfter: video2, audioBefore: audio, audioAfter: audio2 }); active.screenshots.push(await screenshot('desktop-c4-ogv-playing'));
+  const beforeHide = await snapshot(); const pauseVideo = beforeHide.video.find(v => v.stream === video.stream); const pauseAudio = beforeHide.audio.find(a => a.name === audio.name && a.stream === audio.stream);
+  const prologueMusic = beforeHide.audio.find(a => a.playing && a.channel === 'music' && a.cueId.startsWith('chapter4_prologue_'));
+  const background = await active.cdp.send('Target.createTarget', { url: 'about:blank' }); await active.cdp.send('Target.activateTarget', { targetId: background.targetId }); await poll(() => evaluate('document.hidden'), 'real background tab visibility');
+  const hiddenStarted = Date.now(); await interval(2000); const hiddenSnapshot = await snapshot();
+  // Browsers may stop rAF while hidden, including the read-only bridge publisher.
+  // Its cached .paused field is therefore not evidence about current playback.
+  // Measure real playback positions immediately after foreground processing.
+  await active.cdp.send('Page.bringToFront'); await active.cdp.send('Target.closeTarget', { targetId: background.targetId }); await poll(() => evaluate('!document.hidden'), 'foreground tab returns'); await interval(350);
+  const afterShow = await snapshot(); const shownVideo = afterShow.video.find(v => v.stream === video.stream); const shownAudio = afterShow.audio.find(a => a.name === audio.name && a.stream === audio.stream);
+  // The source procedural tune has a 12-note × 260ms loop. Account for its
+  // wrap: a lower playhead after hiding must never masquerade as a pause.
+  let audioAdvance = shownAudio && pauseAudio ? shownAudio.position - pauseAudio.position : Infinity;
+  if (audioAdvance < 0 && pauseAudio?.name.startsWith('Chiptune_')) audioAdvance += pauseAudio.length || 3.12;
+  const playbackPause = { hiddenMs: Date.now() - hiddenStarted, audioAdvanceSeconds: audioAdvance, beforeVideo: pauseVideo, hiddenCachedVideo: hiddenSnapshot.video.find(v => v.stream === video.stream), afterVideo: shownVideo, beforeAudio: pauseAudio, afterAudio: shownAudio };
+  check(shownVideo && shownVideo.position - pauseVideo.position < 1.0, 'real hidden-tab interval does not advance the native OGV playhead', playbackPause);
+  check(pauseAudio && shownAudio && audioAdvance >= -.05 && audioAdvance < 1.0, 'real hidden-tab interval does not advance the native audio playhead', playbackPause);
+  const prologueMusicAfter = afterShow.audio.find(a => a.name === prologueMusic?.name && a.asset === prologueMusic?.asset);
+  check(prologueMusic && prologueMusicAfter && prologueMusicAfter.position - prologueMusic.position >= -.05 && prologueMusicAfter.position - prologueMusic.position < 1.0, 'the exact C4 prologue music prefix preserves its playback timeline while hidden', { before: prologueMusic, after: prologueMusicAfter });
+  check(Math.abs((prologueMusicAfter.position - prologueMusic.position) - (shownVideo.position - pauseVideo.position)) < .5, 'C4 prologue music and decoded OGV retain aligned visible-time advancement after backgrounding');
+  await poll(async () => { const s = await snapshot(); return s.video?.some(v => v.stream === video.stream && !v.paused && v.position > shownVideo.position + .5); }, 'native OGV resumes from retained playhead');
+  await clickControl('返回'); await poll(async () => !gameOf(await snapshot())?.script, 'ordinary media Return closes activity'); check(!state(await snapshot()).chapter4.prologueSeen, 'returning from media does not grant chapter completion');
+  check(!(await snapshot()).audio.some(a => a.playing && a.cueId?.startsWith('chapter4_prologue_')), 'ordinary media Return retires its original C4 audio prefix');
+  await clickControl('播放恢复回放'); await poll(async () => (await snapshot()).video?.some(v => v.playing && !v.paused && v.position > .25 && v.position < 4), 'ordinary media re-entry restarts its OGV stream');
+  active.mediaObservations.push({ phase: 'c4-prologue-pause-return-reentry', playbackPause, resumedAndReentered: true });
+  await clickControl('跳过恢复回放'); check(!state(await snapshot()).chapter4.prologueSeen, 'approved media skip still awaits explicit task acknowledgement'); await clickControl('收下任务，进入第四章');
+  await poll(async () => state(await snapshot()).chapter4.prologueSeen && state(await snapshot()).native.scene === 'duan_yongping_temporal_maze', 'actual task acknowledgement hands off to native C4 A1', 30000);
+  await interval(2000); const reloaded = await startStory(true); check(state(reloaded.snapshot).chapter4.prologueSeen && !gameOf(reloaded.snapshot)?.script, 'native media acknowledgement persists and does not replay after actual reload');
+  console.log('desktop-1280: decoded OGV/audio, real hidden-tab pause/resume, Return/re-entry and acknowledged C4 handoff passed');
+}
+async function bikeCase() {
+  if (!fixtureDir) return;
+  const imported = await importSave(path.join(fixtureDir, 'before_c3_chase_result.json'));
+  const earned = { items: state(imported).items, wallet: state(imported).wallet, canteen: state(imported).canteenHunt };
+  check(earned.canteen.phase === 'chasing' && earned.canteen.bikePaid && !earned.canteen.chaseCompleted, 'earned bike save admits an unfinished paid ride without checkpoint seeding');
+  // Native FileAccess has written the accepted import. The Web backend commits
+  // that user filesystem asynchronously; use the same 1.6s settled-save window
+  // as the ordinary save/reload case before destroying this document.
+  await interval(importSettleMs); const reentry = await startStory(true);
+  check(state(reentry.snapshot).native.chapter === 3 && state(reentry.snapshot).canteenHunt.phase === 'chasing' && !state(reentry.snapshot).canteenHunt.chaseCompleted, 'actual reload retains the imported paid unfinished bike save before rendering is assessed', { chapter: state(reentry.snapshot).native.chapter, page: state(reentry.snapshot).native.page, scene: state(reentry.snapshot).native.scene, phase: state(reentry.snapshot).canteenHunt.phase });
+  const ready = await poll(async () => { const s = await snapshot(); const g = gameOf(s); return g?.mode === 'chase' && g.nativeChaseView?.ready3d && g.nativeChaseView?.presented ? s : null; }, 'real SourceChase3D geometry and first WebGL frame', 180000);
+  check(!gameOf(ready).chase_presentation_error && !gameOf(ready).nativeChaseView.failure_reason, 'real source 3D bike view reports no presentation failure');
+  check(gameOf(ready).nativeChaseView.meshInstances > 0, 'actual 3D bike SubViewport contains original source mesh instances');
+  active.screenshots.push(await screenshot('desktop-source-chase3d-ready'));
+  await clickControl('开始'); const before = await snapshot(); const lane = gameOf(before).model.lane;
+  await key('ArrowRight', 'ArrowRight', true); await interval(650); await key('ArrowRight', 'ArrowRight', false);
+  const right = await poll(async () => { const s = await snapshot(); return gameOf(s)?.model?.lane > lane + .15 ? s : null; }, 'real 3D bike right input changes lane');
+  await key('ArrowLeft', 'ArrowLeft', true); await interval(650); await key('ArrowLeft', 'ArrowLeft', false);
+  const left = await poll(async () => { const s = await snapshot(); return gameOf(s)?.model?.lane < gameOf(right).model.lane - .15 ? s : null; }, 'real 3D bike left input changes lane');
+  await key(' ', 'Space', true); await interval(550); const charged = await snapshot(); check(gameOf(charged).model.charge > .25, 'real 3D bike held Space charges its jump'); await key(' ', 'Space', false);
+  const jumped = await poll(async () => { const s = await snapshot(); return gameOf(s)?.model?.air_height > .1 ? s : null; }, 'real 3D bike released Space produces an airborne rider');
+  check(gameOf(jumped).model.distance > gameOf(before).model.distance && gameOf(jumped).nativeChaseView.presented, 'native 3D road and rider render while the real model advances'); active.screenshots.push(await screenshot('desktop-source-chase3d-jump'));
+  await clickControl('暂停'); const manualPause = await poll(async () => { const s = await snapshot(); return gameOf(s)?.paused ? s : null; }, 'ordinary bike pause');
+  const background = await active.cdp.send('Target.createTarget', { url: 'about:blank' }); await active.cdp.send('Target.activateTarget', { targetId: background.targetId }); await poll(() => evaluate('document.hidden'), 'manual bike pause hidden tab'); await interval(1200); await active.cdp.send('Page.bringToFront'); await active.cdp.send('Target.closeTarget', { targetId: background.targetId }); await interval(400);
+  const stillPaused = await snapshot(); check(gameOf(stillPaused).paused && gameOf(stillPaused).model.distance === gameOf(manualPause).model.distance, 'visibility restoration preserves a player-owned bike pause and model distance');
+  await clickControl('退出'); await poll(async () => !gameOf(await snapshot())?.script, 'ordinary bike exit disposes the 3D activity');
+  const after = state(await snapshot()); check(!after.canteenHunt.chaseCompleted && JSON.stringify(after.items) === JSON.stringify(earned.items) && JSON.stringify(after.wallet) === JSON.stringify(earned.wallet), 'exiting incomplete 3D ride preserves earned inventory, wallet and unfinished chase');
+  await settings(); await saveProgressAndWait('bike explicit save'); await interval(1500); await startStory(true);
+  const resumed = await poll(async () => { const s = await snapshot(); return gameOf(s)?.mode === 'chase' && gameOf(s).nativeChaseView?.ready3d ? s : null; }, 'ordinary save reload re-enters the unfinished 3D bike ride', 180000);
+  check(!state(resumed).canteenHunt.chaseCompleted && JSON.stringify(state(resumed).items) === JSON.stringify(earned.items) && JSON.stringify(state(resumed).wallet) === JSON.stringify(earned.wallet), 'actual native reload preserves the incomplete paid ride without granting 755m completion');
+  await clickControl('退出'); await poll(async () => !gameOf(await snapshot())?.script, 'resumed bike exits through its ordinary control');
+  active.bike = { realSource3d: true, firstFrame: gameOf(ready).nativeChaseView, rightLane: gameOf(right).model.lane, leftLane: gameOf(left).model.lane, jumpHeight: gameOf(jumped).model.air_height, charge: gameOf(charged).model.charge, distance: gameOf(jumped).model.distance, preservedPlayerPause: true, unfinishedSaveReload: true, completionClaimed: false };
+  console.log('desktop-1280: real SourceChase3D WebGL rendering, steering/jump, manual pause ownership, exit and unfinished-save reload passed');
+}
+async function durabilityCase() {
+  if (!fixtureDir) throw new Error('The durability diagnostic requires an earned fixture directory');
+  const before = await snapshot(); const oldDocument = await evaluate('performance.timeOrigin');
+  const imported = await importSave(path.join(fixtureDir, 'after_c2_dorm_exit.json')); const observed = active.imports.at(-1);
+  check(state(imported).native.chapter === 2 && imported.saveDigest !== before.saveDigest, 'small ordinary import visibly changes native State and in-memory save bytes before reload', { beforeChapter: state(before).native.chapter, afterChapter: state(imported).native.chapter, beforeDigest: before.saveDigest, afterDigest: imported.saveDigest });
+  await interval(importSettleMs); const beforeReload = await snapshot();
+  active.durability = { settleMs: importSettleMs, importedObservedAt: observed.observedAt, reloadRequestedAt: Date.now(), beforeReloadChapter: state(beforeReload).native.chapter, beforeReloadPage: state(beforeReload).native.page, beforeReloadDigest: beforeReload.saveDigest };
+  const reloaded = await startStory(true); const newDocument = await evaluate('performance.timeOrigin'); active.durability.afterReloadChapter = state(reloaded.snapshot).native.chapter; active.durability.afterReloadPage = state(reloaded.snapshot).native.page; active.durability.afterReloadDigest = reloaded.snapshot.saveDigest; active.durability.oldDocumentTimeOrigin = oldDocument; active.durability.newDocumentTimeOrigin = newDocument;
+  check(newDocument !== oldDocument, 'durability check actually creates a fresh browser document and Godot engine');
+  check(state(reloaded.snapshot).native.chapter === 2 && state(reloaded.snapshot).native.scene === 'campus_bootstrap', 'fresh browser reload preserves the small accepted ordinary import at the measured settle interval', active.durability);
+  console.log(`desktop-1280: ordinary import durability passed with extra settle=${importSettleMs}ms`);
+}
+async function readPersistentSaveEntries() {
+  return evaluate(`(async()=>{
+    const started=performance.now(), readStartedAt=Date.now(), databases=await indexedDB.databases(), entries=[],stores=[];
+    for(const meta of databases){
+      if(!meta.name)continue;
+      const db=await new Promise((resolve,reject)=>{const request=indexedDB.open(meta.name);request.onupgradeneeded=()=>request.transaction.abort();request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
+      try{
+        if(!db.objectStoreNames.contains('FILE_DATA'))continue;
+        const rows=await new Promise((resolve,reject)=>{const tx=db.transaction('FILE_DATA','readonly'),store=tx.objectStore('FILE_DATA'),keys=store.getAllKeys(),values=store.getAll();tx.oncomplete=()=>resolve(keys.result.map((key,i)=>({key,value:values.result[i]})));tx.onerror=()=>reject(tx.error);});
+        stores.push({database:meta.name,store:'FILE_DATA',keyCount:rows.length});
+        for(const row of rows){
+          if(!/save.*\\.json$/i.test(String(row.key)))continue;
+          const raw=row.value?.contents;
+          if(!raw)continue;
+          const bytes=raw instanceof Uint8Array?raw:new Uint8Array(raw),text=new TextDecoder().decode(bytes);
+          let envelope;try{envelope=JSON.parse(text)}catch{continue}
+          const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(v=>v.toString(16).padStart(2,'0')).join('');
+          entries.push({database:meta.name,key:String(row.key),bytes:bytes.length,sha256:digest,timestampMs:row.value.timestamp instanceof Date?row.value.timestamp.getTime():null,chapter:envelope.state?.native?.chapter,page:envelope.state?.native?.page,scene:envelope.state?.native?.scene,mode:envelope.state?.native?.mode,flags:envelope.state?.flags,canteenPhase:envelope.state?.canteenHunt?.phase});
+        }
+      }finally{db.close()}
+    }
+    return{readStartedAt,readCompletedAt:Date.now(),readDurationMs:performance.now()-started,stores,entries};
+  })()`);
+}
+async function durabilitySwitchCase() {
+  await importSave(path.join(fixtureDir, 'action_c4_prologue_end.json')); await interval(1600); const early = await startStory(true);
+  check(state(early.snapshot).native.chapter === 4 && early.snapshot.world.visible && !gameOf(early.snapshot)?.script, 'durability switch uses an ordinary earlier C4 map without a chapter-ending input owner');
+  const oldDisk = await readPersistentSaveEntries(); check(oldDisk.entries.some(e => e.key.endsWith('/save.json') && e.chapter === 4), 'read-only IDBFS observes the settled C4 primary save', oldDisk);
+  const imported = await importSave(path.join(fixtureDir, 'before_c3_chase_result.json')); const observed = active.imports.at(-1);
+  check(state(imported).native.chapter === 3 && state(imported).canteenHunt.phase === 'chasing', 'ordinary second import is visibly a paid unfinished C3 ride');
+  await interval(importSettleMs); const inMemory = await snapshot(); const beforeReload = await readPersistentSaveEntries();
+  active.durability = { mode: 'earlier-C4-map-to-earned-bike', extraSettleMs: importSettleMs, firstAcceptedAt: observed.firstAcceptedAt, observedAt: observed.observedAt, beforeReloadAt: Date.now(), memoryChapter: state(inMemory).native.chapter, memoryPage: state(inMemory).native.page, memorySaveDigest: inMemory.saveDigest, priorDisk: oldDisk, beforeReloadDisk: beforeReload, oldDocumentTimeOrigin: await evaluate('performance.timeOrigin') };
+  const reloaded = await startStory(true); active.durability.newDocumentTimeOrigin = await evaluate('performance.timeOrigin'); active.durability.afterReloadChapter = state(reloaded.snapshot).native.chapter; active.durability.afterReloadPhase = state(reloaded.snapshot).canteenHunt.phase; active.durability.afterReloadSaveDigest = reloaded.snapshot.saveDigest;
+  check(active.durability.oldDocumentTimeOrigin !== active.durability.newDocumentTimeOrigin, 'two-import durability reload creates a new document');
+  check(state(reloaded.snapshot).native.chapter === 3 && state(reloaded.snapshot).canteenHunt.phase === 'chasing', 'rapid ordinary C4-map-to-bike import and reload preserve the new C3 save', active.durability);
+  console.log('desktop-1280: rapid earlier-C4 to bike switch and read-only IDBFS primary/backup inspection passed');
+}
+function gameOf(s) { return s?.activeGame || s?.active_game; }
+async function c1Case(full) {
+  if (!c1Fixture) return;
+  await importSave(c1Fixture); await clickControl('EndingResumeContinue');
+  await poll(async () => gameOf(await snapshot())?.phase === 'deploy', 'C1 real seven-second blackout finishes', 60000);
+  if (!full) {
+    const s = await snapshot(), g = gameOf(s); const f = g.field; const scale = f.width / 430;
+    const p = await renderPoint({ x: f.x + 215 * scale, y: f.y + 658 * scale }, s);
+    await active.cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ ...p, id: 2 }] }); await active.cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ ...(await renderPoint({ x: f.x + 320 * scale, y: f.y + 658 * scale }, s)), id: 2 }] }); await interval(700);
+    check(gameOf(await snapshot()).session.board_x > 250, 'C1 actual scaled touch drag moves the board');
+    await active.cdp.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] }); await interval(500); check(!gameOf(await snapshot()).dragging, 'C1 actual touch cancellation releases pointer ownership');
+    active.screenshots.push(await screenshot('touch-c1-board')); return;
+  }
+  await poll(async () => gameOf(await snapshot())?.misses >= 1, 'C1 ordinary missed word returns to the same flowing stage', 60000);
+  const missed = gameOf(await snapshot());
+  check(missed.phase === 'intercept' && missed.blocks === 0, 'C1 automatic retry earns no stage proof');
+  check(!controls(await snapshot()).some(c => ['再试这段字流','重看完整线索','继续寻找','显示落点帮助'].includes(c.text)), 'C1 removed retry and clue controls are absent');
+  await poll(async () => gameOf(await snapshot())?.misses > missed.misses, 'C1 another missing word is re-emitted without an overlay or button', 15000);
+  const continued = gameOf(await snapshot());
+  check(continued.session.stage === missed.session.stage && JSON.stringify(continued.session.collected) === JSON.stringify(missed.session.collected), 'C1 unattended retries preserve earned progress without auto-completing');
+  active.screenshots.push(await screenshot(`${active.id}-word-flow-clean`));
+  await press('Escape');
+  await poll(async () => gameOf(await snapshot())?.paused, 'C1 explicit system pause is observed');
+  const pausedFlow = gameOf(await snapshot()); await interval(1000);
+  check(pausedFlow.paused && JSON.stringify(gameOf(await snapshot()).session.cards) === JSON.stringify(pausedFlow.session.cards), 'C1 explicit system pause still freezes word bodies');
+  await clickControl('PrologueResume','name');
+  async function releaseDrag() {
+    if (active.touch) await active.cdp.send('Input.dispatchTouchEvent', {type:'touchEnd',touchPoints:[]});
+    else await active.cdp.send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,x:1,y:1});
+  }
+  async function dragTo(type, point) {
+    if(active.touch) await active.cdp.send('Input.dispatchTouchEvent',{type:type==='start'?'touchStart':'touchMove',touchPoints:[{...point,id:2}]});
+    else await active.cdp.send('Input.dispatchMouseEvent',{type:type==='start'?'mousePressed':'mouseMoved',button:'left',buttons:1,clickCount:1,...point});
+  }
+  let dragging = false; const until = Date.now() + 240000;
+  while (Date.now() < until) {
+    const s = await snapshot(), g = gameOf(s); if (!g || g.phase === 'lock') break;
+    if (!['deploy', 'intercept'].includes(g.phase)) { await interval(150); continue; }
+    const model = g.session; const cards = model.cards || []; const wanted = model.missing || []; const next = wanted[0]; const ordered = model.current?.ordered; let desired = model.board_x; let found = false;
+    for (const c of cards) if (!c.resolved && wanted.includes(c.text) && (!ordered || c.text === next)) { desired = c.position.x; found = true; break; }
+    const hazards=cards.filter(c=>!c.resolved && !c.demonstration && (!wanted.includes(c.text) || ordered && c.text!==next) && c.position.y<=658+29+c.size.y/2+6).sort((a,b)=>b.position.y-a.position.y);
+    const hazard=hazards[0];
+    if(hazard && (!found || hazard.position.y>=380) && Math.abs(Math.max(104,Math.min(326,desired))-hazard.position.x)<88+hazard.size.x/2) desired=hazard.position.x>215?104:326;
+    const f = g.field, scale = f.width / 430;
+    if (!dragging) { await dragTo('start',await renderPoint({ x:f.x+model.board_x*scale,y:f.y+658*scale },s)); dragging = true; }
+    await dragTo('move',await renderPoint({ x:f.x+desired*scale,y:f.y+658*scale },s)); await interval(80);
+  }
+  if (dragging) await releaseDrag();
+  const lock = gameOf(await snapshot()); check(lock?.phase === 'lock' && lock.blocks === 3, 'C1 real pointer contacts complete all three semantic stages');
+  active.mediaObservations.push({ phase: 'c1-lock', audio: (await snapshot()).audio, video: (await snapshot()).video });
+  async function hold(down) {
+    if (!active.touch) return key(' ','Space',down);
+    const observed=await snapshot(),g=gameOf(observed),f=g.field,scale=f.width/430;
+    await active.cdp.send('Input.dispatchTouchEvent',{type:down?'touchStart':'touchEnd',touchPoints:down?[{...(await renderPoint({x:f.x+215*scale,y:f.y+352*scale},observed)),id:3}]:[]});
+  }
+  active.screenshots.push(await screenshot(`${active.id}-c1-lock`)); await interval(650); await hold(true); await interval(600); await hold(false); await interval(400); check(gameOf(await snapshot()).phase === 'lock' && gameOf(await snapshot()).hold_ms === 0, 'C1 partial actual keyboard hold cannot complete');
+  await hold(true); await interval(600);
+  const hiddenHold = await active.cdp.send('Target.createTarget', { url: 'about:blank' }); await active.cdp.send('Target.activateTarget', { targetId: hiddenHold.targetId }); await poll(() => evaluate('document.hidden'), 'C1 actual hidden tab during held lock'); await interval(1600); await active.cdp.send('Page.bringToFront'); await active.cdp.send('Target.closeTarget', { targetId: hiddenHold.targetId }); await interval(450);
+  const returnedHold = gameOf(await snapshot()); check(returnedHold.phase === 'lock' && returnedHold.hold_ms === 0, 'C1 visibility loss releases a held lock without progression or stale input'); await hold(false);
+  if (returnedHold.paused) await clickControl('PrologueResume','name');
+  await hold(true); await interval(1650); await hold(false); await poll(async () => gameOf(await snapshot())?.phase === 'caught', 'C1 actual hold reaches authored dialogue');
+  await poll(async () => state(await snapshot())?.actOne.phase === 'friend_message_required', 'C1 authored dialogue and whiteout hand off to chapter two', 30000);
+  await interval(1500); const reloaded = await startStory(true); check(state(reloaded.snapshot).actOne.phase === 'friend_message_required', 'C1 controller completion persists through actual page reload');
+  console.log(`${active.id}: C1 six-word real ${active.touch?'touch':'mouse and keyboard'} run, authored C2 handoff and native reload passed`);
+}
+async function prepareStreamingFault() {
+  if (!fixtureDir || !existsSync(path.join(fixtureDir, 'after_c2_dorm_exit.json'))) throw new Error('Streaming acceptance requires an earned after_c2_dorm_exit.json fixture directory');
+  const manifestUrl = new URL('content-manifest.json', new URL('.', url)).href;
+  const response = await fetch(manifestUrl, { cache: 'no-cache' });
+  check(response.ok, 'streaming content manifest is independently available');
+  const bytes = Buffer.from(await response.arrayBuffer());
+  const manifest = JSON.parse(bytes);
+  check(manifest.schema === '755-web-content-v1' && manifest.core && Array.isArray(manifest.packs) && manifest.packs.length > 0, 'delivery declares separate core and deferred content packs');
+  const base = new URL('.', url);
+  const coreUrl = new URL(manifest.core.file, base).href;
+  const deferredUrls = manifest.packs.flatMap(pack => [pack.file, ...(pack.transportChunks || []).map(chunk => chunk.file)]).map(file => new URL(file, base).href);
+  for (const deferred of deferredUrls) {
+    const location = artifactLocation(deferred);
+    check(location.relativePath.startsWith('content/') && deferred !== coreUrl, 'controlled failure targets only a declared deferred content path', { relativePath: location.relativePath });
+  }
+  check(new Set(deferredUrls).size === deferredUrls.length, 'deferred PCK and transport chunk URLs are unique');
+  if (exportDir) check(await shaFile(path.join(exportDir, 'content-manifest.json')) === hash(bytes), 'HTTP content manifest matches the actual split export');
+  active.deferredUrls = new Set(deferredUrls);
+  active.controlledBlockedUrls = new Set(deferredUrls);
+  active.faultPhase = 'fresh-c1-deferred-blocked';
+  active.streamingManifest = manifest;
+  active.streaming = { manifestUrl, manifestSha256: hash(bytes), core: manifest.core, deferredPacks: manifest.packs.map(({ id, family, file, bytes, sha256 }) => ({ id, family, file, bytes, sha256 })), boots: [], controlledFailures: [], reloadContentRequests: [] };
+  await active.cdp.send('Network.setBlockedURLs', { urls: deferredUrls });
+}
+
+async function cachedContentKeys() {
+  return evaluate(`(async()=>{
+    if(typeof caches==='undefined')return {available:false,names:[],keys:[]};
+    const names=await caches.keys();
+    if(!names.includes('755-godot-content-v1'))return {available:true,names,keys:[]};
+    const cache=await caches.open('755-godot-content-v1');
+    return {available:true,names,keys:(await cache.keys()).map(request=>request.url)};
+  })()`);
+}
+
+function storyEvidence(value) {
+  return { chapter: state(value)?.native.chapter, page: state(value)?.native.page, scene: state(value)?.native.scene, stateSha256: hash(JSON.stringify(state(value))), saveDigest: value.saveDigest, itemsSha256: hash(JSON.stringify(state(value)?.items)), walletSha256: hash(JSON.stringify(state(value)?.wallet)), actOnePhase: state(value)?.actOne.phase };
+}
+
+async function streamingCase() {
+  const fresh = await snapshot();
+  check(state(fresh)?.native.chapter === 1 && !fresh.content?.blocking, 'fresh C1 ordinary phone interaction and save/reload remain usable with every deferred HTTP URL blocked');
+  const backgroundFailed = await poll(async () => {
+    const value = await snapshot();
+    const failed = value?.content?.packs?.some(pack => pack.family === 'chapter2' && pack.status === 'error');
+    return active.streaming.controlledFailures.length > 0 && failed ? value : null;
+  }, 'background transport failure reaches the content coordinator', 30000);
+  check(!backgroundFailed.content.blocking && backgroundFailed.content.packs.some(pack => pack.status === 'error'), 'a real optional background failure does not show the required-content overlay');
+  check(backgroundFailed.content.enabled && !backgroundFailed.content.monolithic && !backgroundFailed.content.manifestError, 'the running engine uses the content coordinator and a valid split manifest');
+  active.streaming.freshWithBlockedBackground = { evidence: storyEvidence(backgroundFailed), content: backgroundFailed.content };
+  console.log('desktop-1280: first-chapter input/save/reload survives deferred-content HTTP failure');
+
+  active.faultPhase = 'c2-required-failure';
+  await press('Escape'); await interval(250);
+  await importSave(path.join(fixtureDir, 'after_c2_dorm_exit.json'));
+  const blocked = await poll(async () => { const value = await snapshot(); return value?.content?.blocking && value.content.retryVisible && controls(value).some(control => control.name === 'RetryRequiredContent') ? value : null; }, 'ordinary later save shows the real required-content retry control', 60000);
+  check(state(blocked).native.chapter === 2 && state(blocked).native.scene === 'campus_bootstrap' && blocked.content.requiredIds.length > 0, 'validated earned C2 import is retained while required assets are unavailable');
+  const frozen = storyEvidence(blocked);
+  await interval(1200);
+  const whileBlocked = await snapshot();
+  check(whileBlocked.content.blocking && whileBlocked.saveDigest === frozen.saveDigest && hash(JSON.stringify(state(whileBlocked))) === frozen.stateSha256, 'required-content network failure preserves actual imported State and committed save bytes while waiting');
+  active.streaming.requiredFailure = { at: Date.now(), evidence: frozen, content: whileBlocked.content, retryControl: controls(whileBlocked).find(control => control.name === 'RetryRequiredContent') };
+  active.screenshots.push(await screenshot('desktop-streaming-required-retry'));
+
+  active.faultPhase = 'c2-user-retry-recovery';
+  active.controlledBlockedUrls.clear();
+  await active.cdp.send('Network.setBlockedURLs', { urls: [] });
+  await clickControl('RetryRequiredContent', 'name');
+  const ready = await poll(async () => {
+    const value = await snapshot();
+    return value?.content?.readyFamilies?.includes('chapter2') && !value.content.blocking && value.world?.visible && value.world.scene_id === 'campus_bootstrap' && value.world.player ? value : null;
+  }, 'user Retry downloads every C2 block and reveals the real Godot campus map', bootTimeout);
+  check(hash(JSON.stringify(state(ready).items)) === frozen.itemsSha256 && hash(JSON.stringify(state(ready).wallet)) === frozen.walletSha256 && state(ready).actOne.phase === frozen.actOnePhase, 'asset recovery preserves earned inventory, wallet and story phase');
+  const chapter2Packs = active.streamingManifest.packs.filter(pack => pack.family === 'chapter2');
+  check(chapter2Packs.length > 1 && chapter2Packs.every(pack => ready.content.packs.some(loaded => loaded.id === pack.id && loaded.status === 'ready')), 'family readiness requires every independently verified C2 content block');
+  const chapter2Chunks = [...delivery.deferredChunksByUrl.values()].filter(chunk => chunk.family === 'chapter2');
+  if (chapter2Chunks.length) {
+    await poll(() => chapter2Chunks.every(chunk => active.deferredResponses.some(row => row.url === chunk.url && !row.pending && !row.error && row.status === 200)), 'all C2 oversized-pack chunks have actual browser response evidence');
+    for (const chunk of chapter2Chunks) {
+      const observed = active.deferredResponses.find(row => row.url === chunk.url && !row.pending && !row.error && row.status === 200);
+      check(observed.bytes === chunk.bytes && observed.sha256 === chunk.sha256 && !observed.range, 'real deferred HTTP chunk matches its exact bytes and SHA', { file: chunk.file, ...observed });
+    }
+    const oversizedOriginals = new Set(chapter2Packs.filter(pack => pack.transportChunks).map(pack => new URL(pack.file, new URL('.', url)).href));
+    check(!active.requests.some(request => oversizedOriginals.has(request.url)), 'new loader obtains large C2 packs through small static chunks, without the original PCK request');
+  }
+  const position = ready.world.player;
+  await evaluate("document.getElementById('canvas').focus()");
+  let moved = false;
+  for (const direction of ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp']) {
+    await key(direction, direction, true); await interval(500); await key(direction, direction, false); await interval(350);
+    const now = (await snapshot()).world?.player;
+    if (now && Math.hypot(now.x - position.x, now.y - position.y) > 3) { moved = true; break; }
+  }
+  check(moved, 'recovered native campus renders and accepts real keyboard movement');
+  await assertLayout('streaming-recovered-campus');
+  active.screenshots.push(await screenshot('desktop-streaming-campus-recovered'));
+  active.streaming.recovery = { at: Date.now(), evidence: storyEvidence(await snapshot()), content: ready.content, realKeyboardMovement: moved };
 
   const expectedCacheKeys = chapter2Packs.map(pack => new URL('/.755-content-cache/' + pack.sha256 + '.pck', new URL(url).origin).href);
   const cached = await poll(async () => { const value = await cachedContentKeys(); return value.available && expectedCacheKeys.every(key => value.keys.includes(key)) ? value : null; }, 'only natively accepted C2 chunks are committed to actual CacheStorage', 60000);
