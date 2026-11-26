@@ -21,7 +21,15 @@ export async function phoneRecoveryCase(h) {
   async function ensurePhoneSurface() {
     // An earned C2 save restores the world even while native.page remembers an
     // app. Open the actual phone through its shipped world button, not that field.
-    if ((await read()).world.visible) await click('WorldPhoneButton');
+    // The imported snapshot can also retain the phone drawer flag. That flag
+    // has no visible handle while the world owns the surface, so the map
+    // button must be given the first pointer sequence. A second sequence is
+    // safe when Chromium drops the first edge during a high-DPI relayout.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (!(await read()).world.visible) break;
+      await click('WorldPhoneButton');
+      await h.interval(300);
+    }
     const value = await h.poll(async () => {
       const current = await read();
       return !current.world.visible && current.visibleControls.some(c => c.name === 'ControlCenterTrigger') ? current : null;
@@ -134,11 +142,11 @@ export async function phoneRecoveryCase(h) {
   evidence.coverage.push('C1 WiFi refusal then cellular earns 7', 'app navigation has no fixed battery cost');
 
   await h.importSave(path.join(h.fixtureDir, 'before_c2_tiyi_update.json'));
-  // The imported C2 snapshot may remember an open phone drawer. Close it
-  // before touching the world launcher so the drawer cannot own the bottom
-  // pointer sequence while the actual world-to-phone handoff is tested.
-  await closeInventory();
   await ensurePhoneSurface();
+  // The imported C2 snapshot may remember an open phone drawer. Once the
+  // actual phone surface owns the viewport, close it through its own visible
+  // handle before exercising launcher controls.
+  await closeInventory();
   await home(); await network('campus_wifi'); await network('cellular');
   await click('HomeApp_tiyi'); await page('tiyi'); await shot('tiyi-old-client'); await page('phone_home');
   value = await read('C2 repeated network trick refused');
