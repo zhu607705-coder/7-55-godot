@@ -980,8 +980,11 @@ function storyEvidence(value) {
 async function streamingCase() {
   const fresh = await snapshot();
   check(state(fresh)?.native.chapter === 1 && !fresh.content?.blocking, 'fresh C1 ordinary phone interaction and save/reload remain usable with every deferred HTTP URL blocked');
-  await poll(() => active.streaming.controlledFailures.length > 0, 'background transport actually encounters the controlled deferred-content block', 30000);
-  const backgroundFailed = await snapshot();
+  const backgroundFailed = await poll(async () => {
+    const value = await snapshot();
+    const failed = value?.content?.packs?.some(pack => pack.family === 'chapter2' && pack.status === 'error');
+    return active.streaming.controlledFailures.length > 0 && failed ? value : null;
+  }, 'background transport failure reaches the content coordinator', 30000);
   check(!backgroundFailed.content.blocking && backgroundFailed.content.packs.some(pack => pack.status === 'error'), 'a real optional background failure does not show the required-content overlay');
   check(backgroundFailed.content.enabled && !backgroundFailed.content.monolithic && !backgroundFailed.content.manifestError, 'the running engine uses the content coordinator and a valid split manifest');
   active.streaming.freshWithBlockedBackground = { evidence: storyEvidence(backgroundFailed), content: backgroundFailed.content };
