@@ -445,6 +445,13 @@ func _cancel_surface_gestures() -> void:
 	if is_instance_valid(world_viewport): world_viewport.gui_release_focus()
 	get_viewport().gui_release_focus()
 
+func _inventory_touch_press(event: InputEvent) -> bool:
+	if not event is InputEventScreenTouch or not event.pressed: return false
+	for button in inventory_buttons.get_children():
+		if button is BaseButton and button.is_visible_in_tree() and not button.disabled and button.get_global_rect().has_point(event.position):
+			return true
+	return false
+
 func _show_phone_surface() -> void:
 	_cancel_library_reveal()
 	if _surface_navigation_blocked(): return
@@ -1383,6 +1390,12 @@ func _modal_focus_controls(parent: Node, result: Array[Control]) -> void:
 func _input(event: InputEvent) -> void:
 	_room302_observe_input(event)
 	_sync_inventory_dock_input()
+	# A second finger can arrive on an inline item while the scene still owns
+	# the first finger. Cancel the scene owner before the item control acquires
+	# its own touch so high-DPI delivery cannot leave one stale map pointer for
+	# a frame.
+	if _inventory_touch_press(event) and is_instance_valid(world):
+		world.cancel_exploration_gestures()
 	if not _room302_studio_active() and is_instance_valid(world) and (world.handle_root_kayak_pointer(event) or world.handle_root_exploration_pointer(event)):
 		get_viewport().set_input_as_handled(); return
 	if not is_instance_valid(modal) or not event is InputEventKey or not event.pressed: return
