@@ -69,13 +69,11 @@ export function prepareFallback(source, mirrors, temporaryMirrorPath) {
     if (line.trim() === '' || line.startsWith('#')) continue;
     const match = /^(\S+)[ \t]+priority:([1-3])$/.exec(line);
     requireCondition(match && KNOWN_MIRRORS.includes(match[1]), 'unknown or duplicate mirror');
-    // Some Ubuntu runner images append the same approved mirror stanza more
-    // than once while composing the image. Accept and collapse only an exact
-    // duplicate line. A known host with a different priority remains invalid.
-    if (seen.has(match[1])) {
-      requireCondition(seen.get(match[1]) === line, 'unknown or duplicate mirror');
-      continue;
-    }
+    // Some Ubuntu runner images append an approved mirror more than once
+    // while composing the image. Keep the first priority for each approved
+    // host and collapse later entries. No new host or protocol can enter the
+    // fallback because every line still passes the allow-list check above.
+    if (seen.has(match[1])) continue;
     seen.set(match[1], line);
     if (HTTPS_MIRRORS.includes(match[1])) selected.push(raw.endsWith('\n') ? raw : `${raw}\n`);
   }

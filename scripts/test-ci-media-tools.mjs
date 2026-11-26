@@ -225,6 +225,11 @@ test('collapse exact duplicate official mirror lines without inventing a host', 
   const prepared = prepareFallback(SOURCE, mirrors, TEMP_MIRROR);
   assert.equal(prepared.mirrors, MIRRORS.slice(MIRRORS.indexOf('https://archive')));
 });
+test('collapse repeated official mirror hosts with runner-assigned priority changes', () => {
+  const mirrors = MIRRORS + 'https://archive.ubuntu.com/ubuntu/\tpriority:1\n';
+  const prepared = prepareFallback(SOURCE, mirrors, TEMP_MIRROR);
+  assert.equal(prepared.mirrors, MIRRORS.slice(MIRRORS.indexOf('https://archive')));
+});
 test('inverse replacement preserves CRLF, comments, tabs and final newline bytes', () => {
   const source = SOURCE.replace('Public Ubuntu source;', '注释 mirror+file:/etc/apt/apt-mirrors.txt;').replaceAll('URIs: ', 'URIs:\t').replaceAll('\n', '\r\n');
   const p = prepareFallback(source, MIRRORS, TEMP_MIRROR);
