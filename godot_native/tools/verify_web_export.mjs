@@ -1607,9 +1607,24 @@ async function browserCase(id, width, height, touch, dpr = 1) {
     const transportUrls = new Set(delivery.transport.map(asset => asset.url));
     const resources = [...network.values()].filter(record => transportUrls.has(record.url));
     await Promise.all([...active.bootBodyJobs, ...active.fetchBodyJobs]);
+    // Chromium can abandon a paused interception after the body-read timeout
+    // and immediately retry the same deferred URL. Treat the URL as the
+    // response unit so a valid retry supersedes the transient failed attempt.
+    // Every observed URL still needs one complete, exact-byte response.
+    const deferredResponsesByUrl = new Map();
     for (const row of active.deferredResponses) {
-      const expected = delivery.deferredChunksByUrl.get(row.url);
-      check(expected && !row.pending && !row.error && row.status === 200 && !row.range && row.bytes === expected.bytes && row.sha256 === expected.sha256, `${id}: observed deferred chunk passes independent response-byte verification`, row);
+      const rows = deferredResponsesByUrl.get(row.url) || [];
+      rows.push(row);
+      deferredResponsesByUrl.set(row.url, rows);
+    }
+    for (const [chunkUrl, rows] of deferredResponsesByUrl) {
+      const expected = delivery.deferredChunksByUrl.get(chunkUrl);
+      const validRows = rows.filter(row => expected && !row.pending && !row.error && row.status === 200 && !row.range && row.bytes === expected.bytes && row.sha256 === expected.sha256);
+      for (const row of rows) row.supersededByRetry = Boolean(row.error) && validRows.length > 0;
+      check(validRows.length > 0, `${id}: observed deferred chunk passes independent response-byte verification`, {
+        url: chunkUrl,
+        attempts: rows.map(row => ({ status: row.status, pending: row.pending, error: row.error, bytes: row.bytes, sha256: row.sha256, requestId: row.requestId, fetchRequestId: row.fetchRequestId }))
+      });
     }
     const chunkedOriginals = new Set(delivery.content.packs.filter(pack => pack.transportChunks).map(pack => new URL(pack.file, new URL('.', url)).href));
     check(!active.requests.some(request => chunkedOriginals.has(request.url)), `${id}: chunk-capable loader never downloads duplicate original large PCKs`);
