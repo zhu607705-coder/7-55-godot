@@ -19,6 +19,7 @@ const presentationDirectorSource = readText("src/modules/PresentationDirector.ts
 const qizhenSceneSource = readText("src/scenes/rpg/QizhenLakeScene.ts");
 const chapterFourSceneSource = readText("src/scenes/rpg/ChapterFourTemporalMazeScene.ts");
 const chapterFourTimeline = readJson("src/data/chapter4-755.audio.json");
+const ffprobe = process.env.FFPROBE_BIN || "ffprobe";
 let assertions = 0;
 
 function assert(condition, message) {
@@ -31,14 +32,14 @@ function sha256(path) {
 }
 
 function probe(path) {
-  const result = spawnSync("ffprobe", [
+  const result = spawnSync(ffprobe, [
     "-v", "error",
     "-select_streams", "a:0",
     "-show_entries", "stream=codec_name,codec_type,sample_rate,channels:format=duration",
     "-of", "json",
     path
   ], { cwd: root, encoding: "utf8" });
-  if (result.status !== 0) throw new Error(`ffprobe failed for ${path}: ${result.stderr}`);
+  if (result.error || result.status !== 0) throw new Error(`ffprobe failed for ${path}: ${result.error?.message || result.stderr || result.stdout || "unknown error"}`);
   const parsed = JSON.parse(result.stdout);
   return {
     stream: parsed.streams?.find(({ codec_type }) => codec_type === "audio"),

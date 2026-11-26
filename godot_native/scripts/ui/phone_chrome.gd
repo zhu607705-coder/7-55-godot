@@ -496,6 +496,10 @@ func _refresh_inventory() -> void:
 	inventory_body.size=Vector2(74,minf(height,328))
 	inventory.size=Vector2(114,maxf(63,inventory_body.size.y)) if inventory_open else Vector2(38,63)
 	inventory_scroll.set_deferred("scroll_vertical",scroll_before)
+	# _refresh_inventory writes the collapsed size above. Force the anchor
+	# pass to recompute it even when the surrounding phone transform is
+	# unchanged, otherwise the cached signature can leave a 38px handle.
+	_inventory_anchor_signature=[]
 	set_inventory_top(inventory_top)
 
 func _toggle_inventory() -> void:
@@ -589,19 +593,40 @@ func _layout_inventory_anchor() -> void:
 	inventory_arrow.visible=true;inventory_handle.mouse_default_cursor_shape=Control.CURSOR_VSIZE
 	icon.position=Vector2(5,10)
 	inventory_count.position=Vector2(inventory_handle.size.x-inventory_count.size.x+8,-8)
-	if inventory_open:return
-	# A collapsed drawer is always attached to the left side. Vertical dragging
-	# changes only its bounded y; it never becomes a navigation-bar control.
+	if inventory_open or not _reading_inventory_anchor(): return
+	# The collapsed reading tab must keep a 44px rendered hit target while
+	# staying out of the clue body and its action rows. Use the existing empty
+	# header gap when the phone is compact, then fall back to the outside edge.
 	var factor: float=maxf(.001,get_global_transform().get_scale().x)
-	var edge: float=maxf(38,28.0/factor)
-	inventory_handle.size=Vector2(edge,maxf(63,44.0/factor))
+	var edge: float=44.0/factor
+	var gap_left: float=time_box.position.x+time_box.size.x+8
+	var gap_right: float=task_button.position.x-8
+	var header_face:=false
+	if get_global_position().x>=52:
+		inventory.position.x=-(edge+8/factor)
+		inventory_handle.size=Vector2(edge,maxf(edge,63))
+	elif gap_right-gap_left>=edge:
+		inventory.position=Vector2((gap_left+gap_right-edge)/2,40-edge)
+		inventory_handle.size=Vector2(edge,edge)
+		inventory_arrow.visible=false
+		header_face=true
+	elif get_global_position().y>=52:
+		inventory.position=Vector2((CONTENT_SIZE.x-edge)/2,-edge-8/factor)
+		inventory_handle.size=Vector2(edge,edge)
+		inventory_arrow.visible=false
+	else:
+		return
 	inventory.size=inventory_handle.size
-	if _reading_inventory_anchor() and get_global_position().x>=edge*factor+8:
-		inventory.position.x=-edge
-	inventory_handle.mouse_default_cursor_shape=Control.CURSOR_VSIZE
-	icon.position=Vector2((edge-26)/2,10)
-	inventory_count.position=Vector2(edge-inventory_count.size.x+8,-8)
-	_set_inventory_painted_rect(Rect2(Vector2.ZERO,inventory_handle.size))
+	inventory_handle.mouse_default_cursor_shape=Control.CURSOR_POINTING_HAND
+	icon.position=Vector2((inventory_handle.size.x-26)/2,8 if inventory_arrow.visible else (inventory_handle.size.y-26)/2)
+	inventory_count.position=Vector2(maxf(1,inventory_handle.size.x-inventory_count.size.x-2),1)
+	if header_face:
+		var painted:=Rect2((edge-38)/2,5-inventory.position.y,38,30)
+		_set_inventory_painted_rect(painted)
+		icon.position=painted.position+Vector2(6,2)
+		inventory_count.position=painted.position+Vector2(maxf(1,painted.size.x-inventory_count.size.x-2),1)
+	else:
+		_set_inventory_painted_rect(Rect2(Vector2.ZERO,inventory_handle.size))
 
 func _set_inventory_painted_rect(rect:Rect2) -> void:
 	# The hit area can be larger than its face. Shadows/focus follow the face,

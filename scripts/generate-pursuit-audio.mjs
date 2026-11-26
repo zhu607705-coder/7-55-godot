@@ -24,6 +24,8 @@ const checkpointPath = join(
   "node_modules/.cache/seven-fifty-five/pursuit.audio.checkpoint.json"
 );
 const audioRoot = join(root, "src/assets/audio");
+const ffmpeg = process.env.FFMPEG_BIN || "ffmpeg";
+const ffprobe = process.env.FFPROBE_BIN || "ffprobe";
 const content = JSON.parse(readFileSync(contentPath, "utf8"));
 const previousManifest = existsSync(generatedPath)
   ? JSON.parse(readFileSync(generatedPath, "utf8"))
@@ -127,7 +129,7 @@ function writeJsonAtomic(path, value) {
 
 function probeAudio(path, kind, expectedDurationMs = null) {
   if (!existsSync(path)) throw new Error(`Missing pursuit ${kind} asset: ${path}`);
-  const raw = run("ffprobe", [
+  const raw = run(ffprobe, [
     "-v", "error",
     "-select_streams", "a:0",
     "-show_entries", "stream=codec_name,codec_type,sample_rate,channels:format=duration",
@@ -151,7 +153,7 @@ function probeAudio(path, kind, expectedDurationMs = null) {
       `Pursuit ${kind} must be ${expectedSampleRate}Hz ${expectedChannels === 2 ? "stereo" : "mono"}: ${path}`
     );
   }
-  run("ffmpeg", ["-v", "error", "-i", path, "-f", "null", "-"], `Decode ${path}`);
+  run(ffmpeg, ["-v", "error", "-i", path, "-f", "null", "-"], `Decode ${path}`);
   return {
     durationMs,
     codec: stream.codec_name,
@@ -272,7 +274,7 @@ function generateMusic(definition, output) {
     process.stderr.write(
       "MiniMax Music returned HTTP 410; using the deterministic local pursuit-bed fallback.\n"
     );
-    run("ffmpeg", [
+    run(ffmpeg, [
       "-y", "-hide_banner", "-loglevel", "error",
       "-f", "lavfi", "-i", `sine=frequency=55:duration=${definition.durationSeconds}:sample_rate=44100`,
       "-f", "lavfi", "-i", `sine=frequency=110:duration=${definition.durationSeconds}:sample_rate=44100`,
@@ -295,7 +297,7 @@ function generateMusic(definition, output) {
     );
   }
   const fadeOutStart = Math.max(0, definition.durationSeconds - 0.8);
-  run("ffmpeg", [
+  run(ffmpeg, [
     "-y", "-hide_banner", "-loglevel", "error", "-stream_loop", "-1", "-i", raw,
     "-t", String(definition.durationSeconds),
     "-af",
@@ -326,7 +328,7 @@ function generateVoice(line, output) {
     "--text", line.voiceTextEn,
     "--out", raw
   ], `MiniMax pursuit voice ${line.key}`);
-  run("ffmpeg", [
+  run(ffmpeg, [
     "-y", "-hide_banner", "-loglevel", "error", "-i", raw,
     "-af",
     "silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.08:start_threshold=-48dB,areverse,acompressor=threshold=-18dB:ratio=2.2:attack=5:release=100:makeup=2,loudnorm=I=-16:TP=-1.5:LRA=7",

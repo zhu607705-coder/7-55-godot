@@ -6,6 +6,7 @@ import { createServer } from "vite";
 
 const errors = [];
 let assertionCount = 0;
+const ffprobe = process.env.FFPROBE_BIN || "ffprobe";
 
 function assert(condition, message) {
   assertionCount += 1;
@@ -390,15 +391,19 @@ for (const [asset, [minimumMs, maximumMs]] of Object.entries(expectedDetailAudio
   const assetPath = audioAssetPaths.get(asset);
   assert(Boolean(assetPath), `${asset}.mp3 must exist`);
   if (!assetPath) continue;
-  const probe = spawnSync("ffprobe", [
+  const probe = spawnSync(ffprobe, [
     "-v", "error",
     "-show_entries", "format=duration",
     "-of", "default=noprint_wrappers=1:nokey=1",
     assetPath
   ], { encoding: "utf8" });
-  const durationMs = Number.parseFloat(probe.stdout.trim()) * 1000;
-  assert(probe.status === 0 && Number.isFinite(durationMs), `${asset}.mp3 must be readable by ffprobe`);
-  assert(durationMs >= minimumMs && durationMs <= maximumMs, `${asset}.mp3 duration must be ${minimumMs}-${maximumMs}ms, got ${durationMs}`);
+  const durationMs = Number.parseFloat((probe.stdout || "").trim()) * 1000;
+  const probeFailure = probe.error?.message || probe.stderr || "unknown ffprobe error";
+  const probeOk = probe.status === 0 && !probe.error && Number.isFinite(durationMs);
+  assert(probeOk, `${asset}.mp3 must be readable by ffprobe: ${probeFailure}`);
+  if (probeOk) {
+    assert(durationMs >= minimumMs && durationMs <= maximumMs, `${asset}.mp3 duration must be ${minimumMs}-${maximumMs}ms, got ${durationMs}`);
+  }
 }
 assert(!Object.keys(audio.events).some((id) => /exterior_closure|acknowledge_exterior/.test(id)), "official exterior closure must retain zero audio cues");
 assert(

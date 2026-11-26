@@ -108,8 +108,21 @@ func build(b,view: Dictionary) -> Control:
 		var panel: Panel=b._panel(root,Rect2(LEFT-8,y,WIDTH+16,row_height),Color.WHITE,Color("dce1e5"),0,1)
 		panel.name="Cc98ReplyPanel_%d" % floor_number
 		label(b,root,heading,y+12,16,BLUE).name="Cc98ReplyTitle_%d" % floor_number
-		label(b,root,body,y+12+heading_height+14).name="Cc98ReplyBody_%d" % floor_number
+		var body_label: Label=label(b,root,body,y+12+heading_height+14,17)
+		body_label.name="Cc98ReplyBody_%d" % floor_number
 		var action_y=y+row_height-64
+		if has_catalog_title or selectable_bd:
+			# The shared phone theme can use a wider glyph set than the static
+			# measurement font above. Anchor the action from the rendered body so
+			# a compact viewport never lays a new control over the last clue line.
+			var body_end: float=body_label.position.y+body_label.size.y
+			# Theme propagation can add one line-height to the native label after
+			# this builder returns. Keep a full readable gutter before the action.
+			var action_gap: float=48.0
+			action_y=maxf(action_y,body_end+action_gap)
+			var action_height: float=48.0 if has_catalog_title else 44.0
+			row_height=maxf(row_height,action_y-y+action_height+12.0)
+			panel.size.y=row_height
 		if has_catalog_title:
 			# ScrollContainer stores integer offsets. Snap the action's bottom in
 			# its scaled scroll coordinate space so ensure_control_visible does
