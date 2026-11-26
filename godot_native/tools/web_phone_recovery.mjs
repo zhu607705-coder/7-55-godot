@@ -134,8 +134,11 @@ export async function phoneRecoveryCase(h) {
   evidence.coverage.push('C1 WiFi refusal then cellular earns 7', 'app navigation has no fixed battery cost');
 
   await h.importSave(path.join(h.fixtureDir, 'before_c2_tiyi_update.json'));
-  await ensurePhoneSurface();
+  // The imported C2 snapshot may remember an open phone drawer. Close it
+  // before touching the world launcher so the drawer cannot own the bottom
+  // pointer sequence while the actual world-to-phone handoff is tested.
   await closeInventory();
+  await ensurePhoneSurface();
   await home(); await network('campus_wifi'); await network('cellular');
   await click('HomeApp_tiyi'); await page('tiyi'); await shot('tiyi-old-client'); await page('phone_home');
   value = await read('C2 repeated network trick refused');
