@@ -95,9 +95,16 @@ export async function phoneRecoveryCase(h) {
     await shot(`dock-${percent}-charged`);
     await click('DeskPhonePickup'); await page('bonsai');
     await click('ControlCenterTrigger');
-    const before = await read();
-    const slider = before.visibleControls.find(c => c.name === 'ControlBrightness');
-    h.check(slider?.rect?.height > 0, `${h.id}: real brightness control geometry is observable`);
+    // On high-DPI emulation the control-center overlay can publish its
+    // geometry one or two frames after the trigger click. Wait for the real
+    // exposed control rather than sampling a transient pre-layout snapshot.
+    const opened = await h.poll(async () => {
+      const current = await read();
+      const slider = current.visibleControls.find(c => c.name === 'ControlBrightness' && c.rect?.width > 0 && c.rect?.height > 0);
+      return slider ? { current, slider } : null;
+    }, `${h.id}: real brightness control geometry is observable`, 15000);
+    const before = opened.current;
+    const slider = opened.slider;
     evidence.inputs.push({ name: 'ControlBrightness', method: h.touch ? 'ordinaryTouchTap' : 'ordinaryMouseClick', at: Date.now() });
     await h.clickPoint(await h.renderPoint({ x: slider.rect.x + slider.rect.width / 2, y: slider.rect.y + slider.rect.height * .05 }, before));
     await h.poll(async () => (await read()).state.ui.brightness >= 80, 'manual brightness reaches original plant threshold');
