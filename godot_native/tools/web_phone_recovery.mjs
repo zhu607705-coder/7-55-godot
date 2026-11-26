@@ -26,9 +26,17 @@ export async function phoneRecoveryCase(h) {
     // button must be given the first pointer sequence. A second sequence is
     // safe when Chromium drops the first edge during a high-DPI relayout.
     for (let attempt = 0; attempt < 2; attempt++) {
-      if (!(await read()).world.visible) break;
+      const before = await read();
+      evidence.samples.push({ label: `world-to-phone attempt ${attempt + 1} before`, at: Date.now(),
+        world: before.world, ui: before.state?.ui, native: before.state?.native,
+        controls: before.visibleControls.filter(c => ['WorldPhoneButton', 'InventoryHandle', 'ControlCenterTrigger'].includes(c.name)) });
+      if (!before.world.visible) break;
       await click('WorldPhoneButton');
       await h.interval(300);
+      const after = await read();
+      evidence.samples.push({ label: `world-to-phone attempt ${attempt + 1} after`, at: Date.now(),
+        world: after.world, ui: after.state?.ui, native: after.state?.native,
+        controls: after.visibleControls.filter(c => ['WorldPhoneButton', 'InventoryHandle', 'ControlCenterTrigger'].includes(c.name)) });
     }
     const value = await h.poll(async () => {
       const current = await read();

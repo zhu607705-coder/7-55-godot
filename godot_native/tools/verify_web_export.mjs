@@ -317,6 +317,18 @@ async function waitForPersistedSave(label, previousToken = -1, visibleSuccess = 
   } catch (error) {
     diagnostics.stop('wait-failed');
     attempt.failedAt = Date.now();
+    try {
+      const failedSnapshot = await snapshot();
+      attempt.failureSnapshot = {
+        sampleFrame: failedSnapshot?.sampleFrame,
+        state: failedSnapshot?.state,
+        saveDigest: failedSnapshot?.saveDigest,
+        savePersistence: failedSnapshot?.savePersistence,
+        controls: controls(failedSnapshot).filter(control => /SaveNativeProgress|导入存档|控制中心/.test(`${control.name} ${control.text}`))
+      };
+    } catch (snapshotError) {
+      attempt.failureSnapshot = { error: snapshotError.message };
+    }
     // A readonly backing-store sample diagnoses a failed receipt without
     // accepting it, retrying a game save, or extending the original watchdog.
     try { attempt.failureDisk = await readPersistentSaveEntries(); }
